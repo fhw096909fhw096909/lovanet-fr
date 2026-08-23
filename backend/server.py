@@ -121,6 +121,10 @@ COUNTDOWNS = [
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36"
 SYNC_INTERVAL_SECONDS = int(os.environ.get("SYNC_INTERVAL_SECONDS", "300"))
 YOUTUBE_API_KEY = os.environ.get("YOUTUBE_API_KEY", "")
+WEB_PUSH_VAPID_PUBLIC_KEY = os.environ.get("WEB_PUSH_VAPID_PUBLIC_KEY", "").strip()
+WEB_PUSH_VAPID_PRIVATE_KEY = os.environ.get("WEB_PUSH_VAPID_PRIVATE_KEY", "").strip()
+WEB_PUSH_SUBJECT = os.environ.get("WEB_PUSH_SUBJECT", "mailto:alerts@lovanet.fr").strip() or "mailto:alerts@lovanet.fr"
+WEB_PUSH_SUBSCRIPTIONS_COLLECTION = "push_subscriptions"
 sync_lock = asyncio.Lock()
 scheduler_task: Optional[asyncio.Task] = None
 
@@ -178,6 +182,158 @@ def request_text(url: str, timeout: int = 20, headers: Optional[Dict[str, str]] 
     req = urllib.request.Request(url, headers=req_headers)
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.status, resp.read().decode("utf-8", "replace")
+
+
+def is_web_push_configured() -> bool:
+    return bool(WEB_PUSH_VAPID_PUBLIC_KEY and WEB_PUSH_VAPID_PRIVATE_KEY and WEB_PUSH_SUBJECT)
+
+
+def get_web_push_public_config() -> Dict[str, Any]:
+    return {
+        "supported": is_web_push_configured(),
+        "vapid_public_key": WEB_PUSH_VAPID_PUBLIC_KEY or None,
+        "subject": WEB_PUSH_SUBJECT,
+        "reason": None if is_web_push_configured() else "missing_vapid_keys",
+    }
+
+
+def sanitize_push_endpoint(endpoint: str) -> str:
+    value = str(endpoint or "").strip()
+    if not value.startswith("https://"):
+        return ""
+    return value
+
+
+def push_endpoint_hash(endpoint: str) -> str:
+    return hashlib.sha256(endpoint.encode("utf-8", "ignore")).hexdigest()
+
+
+def build_push_notification_payload(
+    title: str,
+    body: str,
+    url: str = "/",
+    tag: str = "lovanet-push",
+    icon: str = "/lovanet-icon-192.png?v=19",
+    badge: str = "/lovanet-icon-64.png?v=19",
+) -> Dict[str, Any]:
+    return {
+        "title": str(title or "Lovanet").strip() or "Lovanet",
+        "body": str(body or "Nouveau contenu disponible sur Lovanet.").strip() or "Nouveau contenu disponible sur Lovanet.",
+        "url": str(url or "/").strip() or "/",
+        "tag": str(tag or "lovanet-push").strip() or "lovanet-push",
+        "icon": icon,
+        "badge": badge,
+    }
+
+
+async def store_push_subscription(subscription: Dict[str, Any], request: Request, locale: Optional[str] = None) -> Dict[str, Any]:
+    endpoint = sanitize_push_endpoint(subscription.get("endpoint") or "")
+    keys = subscription.get("keys") or {}
+    if not endpoint or not keys.get("p256dh") or not keys.get("auth"):
+        raise HTTPException(status_code=400, detail="Abonnement push invalide.")
+    now = utc_now_iso()
+    doc = {
+        "endpoint_hash": push_endpoint_hash(endpoint),
+        "endpoint": endpoint,
+        "subscription": {
+            "endpoint": endpoint,
+            "expirationTime": subscription.get("expirationTime"),
+            "keys": {
+                "p256dh": str(keys.get("p256dh") or "").strip(),
+                "auth": str(keys.get("auth") or "").strip(),
+            },
+        },
+        "locale": str(locale or request.headers.get("accept-language") or "").split(",")[0].strip() or None,
+        "user_agent": request.headers.get("user-agent"),
+        "updated_at": now,
+        "status": "active",
+    }
+    await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].update_one(
+        {"endpoint_hash": doc["endpoint_hash"]},
+        {"$set": doc, "$setOnInsert": {"created_at": now}},
+        upsert=True,
+    )
+    return doc
+
+
+async def delete_push_subscription(endpoint: str) -> bool:
+    clean_endpoint = sanitize_push_endpoint(endpoint)
+    if not clean_endpoint:
+        return False
+    result = await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].delete_one({"endpoint_hash": push_endpoint_hash(clean_endpoint)})
+    return result.deleted_count > 0
+
+
+async def send_web_push_to_subscription(subscription_doc: Dict[str, Any], payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not is_web_push_configured():
+        raise RuntimeError("web_push_not_configured")
+
+    def _send() -> None:
+        from pywebpush import WebPushException, webpush
+
+        try:
+            webpush(
+                subscription_info=subscription_doc["subscription"],
+                data=json.dumps(payload, ensure_ascii=False),
+                vapid_private_key=WEB_PUSH_VAPID_PRIVATE_KEY,
+                vapid_claims={"sub": WEB_PUSH_SUBJECT},
+                ttl=300,
+            )
+        except WebPushException as exc:
+            status_code = getattr(getattr(exc, "response", None), "status_code", None)
+            raise RuntimeError(f"webpush:{status_code or 'unknown'}") from exc
+
+    endpoint = sanitize_push_endpoint(subscription_doc.get("endpoint") or "")
+    if not endpoint:
+        return {"status": "skipped", "reason": "invalid_endpoint"}
+
+    try:
+        await asyncio.to_thread(_send)
+        await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].update_one(
+            {"endpoint_hash": subscription_doc["endpoint_hash"]},
+            {"$set": {"last_success_at": utc_now_iso(), "last_error": None, "status": "active"}},
+        )
+        return {"status": "sent", "endpoint_hash": subscription_doc["endpoint_hash"]}
+    except Exception as exc:
+        message = str(exc)
+        if any(code in message for code in ["webpush:404", "webpush:410"]):
+            await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].delete_one({"endpoint_hash": subscription_doc["endpoint_hash"]})
+            return {"status": "expired", "endpoint_hash": subscription_doc["endpoint_hash"]}
+        await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].update_one(
+            {"endpoint_hash": subscription_doc["endpoint_hash"]},
+            {"$set": {"last_error": message[:300], "status": "error", "updated_at": utc_now_iso()}},
+        )
+        logger.warning("Web push send failed for endpoint %s: %s", subscription_doc.get("endpoint_hash"), message)
+        return {"status": "error", "endpoint_hash": subscription_doc["endpoint_hash"], "error": message[:160]}
+
+
+async def send_web_push_to_endpoint(endpoint: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    clean_endpoint = sanitize_push_endpoint(endpoint)
+    if not clean_endpoint:
+        raise HTTPException(status_code=400, detail="Endpoint push invalide.")
+    subscription_doc = await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].find_one({"endpoint_hash": push_endpoint_hash(clean_endpoint)})
+    if not subscription_doc:
+        raise HTTPException(status_code=404, detail="Abonnement push introuvable.")
+    return await send_web_push_to_subscription(subscription_doc, payload)
+
+
+async def broadcast_web_push(payload: Dict[str, Any]) -> Dict[str, Any]:
+    if not is_web_push_configured():
+        return {"status": "disabled", "reason": "missing_vapid_keys", "sent": 0, "expired": 0, "failed": 0, "total": 0}
+    subscriptions = await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].find({"status": {"$ne": "disabled"}}, {"_id": 0}).to_list(5000)
+    if not subscriptions:
+        return {"status": "idle", "sent": 0, "expired": 0, "failed": 0, "total": 0}
+    results = await asyncio.gather(*[send_web_push_to_subscription(doc, payload) for doc in subscriptions])
+    sent = sum(1 for row in results if row.get("status") == "sent")
+    expired = sum(1 for row in results if row.get("status") == "expired")
+    failed = sum(1 for row in results if row.get("status") == "error")
+    return {
+        "status": "ok" if sent else ("partial" if expired or failed else "idle"),
+        "sent": sent,
+        "expired": expired,
+        "failed": failed,
+        "total": len(subscriptions),
+    }
 
 
 TRANSLATION_CACHE_COLLECTION = "translation_cache"
@@ -1619,6 +1775,7 @@ async def sync_news_sources(limit_per_source: int = 18) -> Dict[str, Any]:
                 upsert=True,
             )
             per_source.append({"source_id": source["id"], "status": "degraded", "error": str(exc)[:200], "count": 0})
+    sorted_docs: List[Dict[str, Any]] = []
     if all_docs:
         sorted_docs = sorted(all_docs, key=lambda item: (item.get("trending_score", 0), item.get("published_at") or datetime.now(timezone.utc)), reverse=True)
         top_hashes = {item["hash"] for item in sorted_docs[:12] if item.get("hash")}
@@ -1627,7 +1784,17 @@ async def sync_news_sources(limit_per_source: int = 18) -> Dict[str, Any]:
             await db.news_articles.update_many({"hash": {"$in": list(top_hashes)}}, {"$set": {"is_featured": True}})
     status = "ok" if any(row.get("status") == "ok" for row in per_source) else "degraded"
     state = await update_sync_state("news", status, inserted=inserted, updated=updated, meta={"sources": per_source, "count": len(all_docs)})
-    return {"status": status, "inserted": inserted, "updated": updated, "count": len(all_docs), "sources": per_source, "state": state}
+    push_result = None
+    if inserted > 0 and sorted_docs:
+        primary = next((item for item in sorted_docs if item.get("title")), sorted_docs[0])
+        push_payload = build_push_notification_payload(
+            title="Nouvelle actu Lovanet",
+            body=str(primary.get("title") or "Une nouvelle actualité est disponible sur Lovanet.")[:140],
+            url=f"/actualites/{primary.get('slug')}" if primary.get("slug") else "/actualites",
+            tag=f"lovanet-news-{primary.get('slug') or primary.get('hash') or 'latest'}",
+        )
+        push_result = await broadcast_web_push(push_payload)
+    return {"status": status, "inserted": inserted, "updated": updated, "count": len(all_docs), "sources": per_source, "state": state, "push": push_result}
 
 
 async def build_news_fallback(limit: int = 36) -> List[Dict[str, Any]]:
@@ -1773,6 +1940,39 @@ async def get_news_home():
     }
 
 
+@api_router.get("/push/public-key")
+async def get_push_public_key():
+    return get_web_push_public_config()
+
+
+@api_router.post("/push/subscribe")
+async def push_subscribe(payload: PushSubscribeRequest, request: Request):
+    if not is_web_push_configured():
+        raise HTTPException(status_code=503, detail="Web Push non configuré sur le serveur.")
+    doc = await store_push_subscription(payload.subscription.model_dump(), request, locale=payload.locale)
+    return {"status": "ok", "subscription": {"endpoint": doc["endpoint"], "endpoint_hash": doc["endpoint_hash"]}}
+
+
+@api_router.post("/push/unsubscribe")
+async def push_unsubscribe(payload: PushUnsubscribeRequest):
+    deleted = await delete_push_subscription(payload.endpoint)
+    return {"status": "ok", "deleted": deleted}
+
+
+@api_router.post("/push/test")
+async def push_test(payload: PushTestRequest):
+    if not is_web_push_configured():
+        raise HTTPException(status_code=503, detail="Web Push non configuré sur le serveur.")
+    notification = build_push_notification_payload(
+        title=payload.title or "Test Lovanet",
+        body=payload.body or "Votre appareil reçoit bien les notifications Web Push Lovanet.",
+        url=payload.url or "/actualites",
+        tag="lovanet-push-test",
+    )
+    result = await send_web_push_to_endpoint(payload.endpoint, notification)
+    return {"status": "ok", "result": result}
+
+
 @api_router.get("/news/sources")
 async def get_news_sources():
     rows = await db.news_sources.find({}, {"_id": 0}).sort("priority", -1).to_list(50)
@@ -1908,6 +2108,34 @@ class OrderCreate(BaseModel):
     email: EmailStr
     items: List[OrderLine]
     note: Optional[str] = Field(default="", max_length=1200)
+
+
+class PushSubscriptionKeys(BaseModel):
+    p256dh: str = Field(..., min_length=16)
+    auth: str = Field(..., min_length=8)
+
+
+class PushSubscriptionPayload(BaseModel):
+    endpoint: str = Field(..., min_length=16)
+    expirationTime: Optional[int] = None
+    keys: PushSubscriptionKeys
+    model_config = ConfigDict(extra="allow")
+
+
+class PushSubscribeRequest(BaseModel):
+    subscription: PushSubscriptionPayload
+    locale: Optional[str] = None
+
+
+class PushUnsubscribeRequest(BaseModel):
+    endpoint: str = Field(..., min_length=16)
+
+
+class PushTestRequest(BaseModel):
+    endpoint: str = Field(..., min_length=16)
+    title: Optional[str] = None
+    body: Optional[str] = None
+    url: Optional[str] = "/actualites"
 
 
 class SyncRunRequest(BaseModel):
@@ -2391,6 +2619,8 @@ async def startup_event():
     await db.news_articles.create_index([("published_at", -1), ("trending_score", -1)])
     await db.news_sources.create_index("id", unique=True)
     await db.sync_state.create_index("key", unique=True)
+    await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].create_index("endpoint_hash", unique=True)
+    await db[WEB_PUSH_SUBSCRIPTIONS_COLLECTION].create_index([("status", 1), ("updated_at", -1)])
     await db[TRANSLATION_CACHE_COLLECTION].create_index([("target_lang", 1), ("updated_at", -1)])
     await db[TRANSLATION_CACHE_COLLECTION].create_index("original_text")
     await seed_news_sources()

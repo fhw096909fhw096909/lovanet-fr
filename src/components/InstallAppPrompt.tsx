@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { X, Download, Share, Bell, BellRing, MoreVertical } from "lucide-react";
+import { registerWebPushSubscription, sendWebPushTest } from "@/lib/webPush";
 
 type BIPEvent = Event & {
   prompt: () => Promise<void>;
@@ -60,6 +61,7 @@ export const InstallAppPrompt = () => {
   const [browser, setBrowser] = useState<Browser>("unknown");
   const [notifState, setNotifState] = useState<NotificationPermission | "unsupported">("default");
   const [notice, setNotice] = useState<string | null>(null);
+  const [notifPending, setNotifPending] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -138,24 +140,21 @@ export const InstallAppPrompt = () => {
       setNotice("Les alertes ne sont pas supportées par ce navigateur.");
       return;
     }
+    setNotifPending(true);
     try {
-      const perm = await Notification.requestPermission();
+      const perm = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
       setNotifState(perm);
       if (perm === "granted") {
-        const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
-        const options = {
-          body: "Vous recevrez les alertes Lovanet : nouveautés, sorties et actualités.",
-          icon: "/lovanet-icon-192.png?v=19",
-          badge: "/lovanet-icon-192.png?v=19",
-          tag: "lovanet-welcome",
-        };
-        if (reg) await reg.showNotification("Alertes Lovanet activées", options);
-        else new Notification("Alertes Lovanet activées", options);
+        const subscription = await registerWebPushSubscription(perm === Notification.permission);
+        await sendWebPushTest(subscription.endpoint);
+        setNotice("Notification de test envoyée. Si rien n’apparaît, vérifiez les autorisations système du navigateur.");
       } else if (perm === "denied") {
         setNotice("Alertes bloquées : réactivez-les dans les réglages du navigateur (icône cadenas).");
       }
-    } catch {
-      setNotice("Impossible d'activer les alertes sur ce navigateur.");
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Impossible d'activer les alertes sur ce navigateur.");
+    } finally {
+      setNotifPending(false);
     }
   };
 
@@ -191,6 +190,13 @@ export const InstallAppPrompt = () => {
             width={160}
             height={160}
             className="h-20 w-20 object-contain sm:h-28 sm:w-28"
+            onError={(e) => {
+              const img = e.currentTarget;
+              if (!img.dataset.fallbackApplied) {
+                img.dataset.fallbackApplied = "1";
+                img.src = "/icons/invite_512.png";
+              }
+            }}
           />
         </div>
 
@@ -217,11 +223,11 @@ export const InstallAppPrompt = () => {
         {notifState !== "unsupported" && (
           <button
             onClick={enableNotifications}
-            disabled={notifState === "granted"}
+            disabled={notifPending}
             className="glass3d-btn mt-3 inline-flex min-h-[44px] w-full items-center justify-center gap-2 rounded-2xl px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
           >
             {notifState === "granted" ? <BellRing className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
-            {notifState === "granted" ? "Alertes activées" : "Activer les alertes"}
+            {notifPending ? "Activation..." : notifState === "granted" ? "Tester / réparer les alertes" : "Activer les alertes"}
           </button>
         )}
 
