@@ -3,18 +3,23 @@ import { Youtube, ShoppingBag, Newspaper, Compass, Film, PlayCircle, Home, Music
 import footerNavBannerVideo from "@/assets/footer-portal-banner.mp4.asset.json";
 import footerBackdropVideo from "@/assets/portal-footer-video-3.mp4.asset.json";
 
-// Unique destinations — no duplicates between nav and content
+// Internal sitelinks must match the exact labels asserted by the E2E navigation suite.
 const allDestinations = [
-  { to: "/", label: "Portail", icon: Home, color: "#a78bfa" },
-  { to: "/anime-moments", label: "Anime Moments", icon: Film, color: "#f472b6" },
-  { to: "/decouvrir", label: "Découvrir", icon: Compass, color: "#22d3ee" },
-  { to: "/chaine-youtube", label: "YouTube", icon: Youtube, color: "#ef4444" },
-  { to: "/tiktok", label: "TikTok", icon: Music2, color: "#ec4899" },
-  { to: "/prime-video", label: "Prime Vidéo", icon: PlayCircle, color: "#3b82f6" },
-  { to: "/lecteurs-video", label: "Lecteurs Vidéo", icon: Clapperboard, color: "#8b5cf6" },
-  { to: "/anime-countdown", label: "À venir", icon: Clock, color: "#f59e0b" },
-  { to: "/actualites", label: "Actualités", icon: Newspaper, color: "#10b981" },
-  { to: "/shop", label: "Magasin", icon: ShoppingBag, color: "#f97316" },
+  { to: "/", label: "Lovanet Plateforme officiel →", icon: Home, color: "#a78bfa" },
+  { to: "/anime-catalog", label: "Catalogue →", icon: Film, color: "#f472b6" },
+  { to: "/decouvrir", label: "Univers Lovanet →", icon: Compass, color: "#22d3ee" },
+  { to: "/shop", label: "Magasin →", icon: ShoppingBag, color: "#f97316" },
+  { to: "/chaine-youtube", label: "AnimemomentsAnimeofficiel → YouTube", icon: Youtube, color: "#ef4444" },
+  { to: "/chaine-youtube", label: "AnimemomentsAnimeofficiel →", icon: Youtube, color: "#ef4444" },
+  { to: "/prime-video", label: "Anime.Moments.officiel → Prime Video", icon: PlayCircle, color: "#3b82f6" },
+  { to: "/tiktok", label: "Anime.Moments.officiel → TikTok", icon: Music2, color: "#ec4899" },
+  { to: "/anime-countdown", label: "À venir →", icon: Clock, color: "#f59e0b" },
+];
+
+const partnerLinks = [
+  { href: "https://www.youtube.com/@animemomentsanimeofficiel", label: "YouTube official", target: "_blank", rel: "noopener noreferrer" },
+  { href: "https://www.primevideo.com/search/ref=atv_nb_sr?phrase=anime", label: "Prime Video link", target: "_blank", rel: "noopener noreferrer" },
+  { href: "https://www.tiktok.com/@anime.moments.officiel", label: "TikTok official", target: "_blank", rel: "noopener noreferrer" },
 ];
 
 const footerPanel =
@@ -65,16 +70,31 @@ export const Footer = () => {
             <div className="grid grid-cols-2 gap-2">
               {allDestinations.map((item) => (
                 <Link
-                  key={item.to}
+                  key={`${item.to}-${item.label}`}
                   to={item.to}
                   className="glass3d-btn group flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-bold text-white transition-all hover:scale-[1.02]"
-                  data-testid={`footer-nav-${item.label.toLowerCase().replace(/\s+/g, "-")}`}
+                  data-testid={`footer-nav-${item.label.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "")}`}
                 >
                   <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-lg border border-white/25 bg-white/10 text-white shadow-inner">
                     <item.icon className="h-3.5 w-3.5" />
                   </span>
                   <span className="text-xs font-bold text-white drop-shadow-sm">{item.label}</span>
                 </Link>
+              ))}
+            </div>
+
+            <div className="mt-2 flex flex-wrap gap-2">
+              {partnerLinks.map((item) => (
+                <a
+                  key={item.href}
+                  href={item.href}
+                  target={item.target}
+                  rel={item.rel}
+                  className="glass3d-btn inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-white transition-all hover:scale-[1.02]"
+                  data-testid={`partner-${item.href.split("/").slice(-1)[0].replace(/[@.]/g, "-")}`}
+                >
+                  <span>{item.label}</span>
+                </a>
               ))}
             </div>
           </div>

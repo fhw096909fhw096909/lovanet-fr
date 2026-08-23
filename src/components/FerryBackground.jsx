@@ -2,6 +2,7 @@ import React, { useRef, useMemo, useEffect, useState, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Stars, OrbitControls, Text, RoundedBox } from '@react-three/drei';
+import { EffectComposer, Bloom, DepthOfField, Vignette, BrightnessContrast, HueSaturation, Noise, SMAA } from '@react-three/postprocessing';
 import * as THREE from 'three';
 import { useMobileOptimization } from '../hooks/useMobileOptimization';
 import useSoundEffects from '../hooks/useSoundEffects';
@@ -1462,6 +1463,894 @@ function DeckParty({ night }) {
 function Seagulls({ tod }) {
   const ref = useRef();
   const isDay = tod > 0.18 && tod < 0.82;
+
+function HubWorldExpansion({ tod }) {
+  const night = tod < 0.18 || tod > 0.82;
+  const pulseRefs = useRef([]);
+
+  const skylineBuildings = useMemo(() => ([
+    { x: -82, z: -170, w: 10, d: 10, h: 28, style: 'concrete' },
+    { x: -64, z: -162, w: 16, d: 14, h: 42, style: 'glass-tower', crown: true },
+    { x: -46, z: -154, w: 12, d: 12, h: 34, style: 'modern-slim', antenna: true },
+    { x: -28, z: -160, w: 18, d: 16, h: 48, style: 'office', setbacks: true },
+    { x: -10, z: -168, w: 14, d: 14, h: 38, style: 'residential' },
+    { x: 12, z: -166, w: 20, d: 18, h: 58, style: 'supertall', spire: true },
+    { x: 34, z: -158, w: 16, d: 14, h: 46, style: 'art-deco', crown: true },
+    { x: 56, z: -150, w: 22, d: 18, h: 66, style: 'glass-tower', spire: true },
+    { x: 74, z: -162, w: 12, d: 12, h: 32, style: 'concrete' },
+    { x: 94, z: -170, w: 18, d: 18, h: 50, style: 'modern-slim', crown: true },
+  ]), []);
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    pulseRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+      ref.intensity = night ? 0.28 + Math.max(0, Math.sin(t * 2 + index * 0.6)) * 0.22 : 0.08;
+      ref.position.y = 2.2 + Math.sin(t * 1.3 + index) * 0.1;
+    });
+  });
+
+  return (
+    <group>
+      <group position={[16, 0, -28]}>
+        <mesh position={[0, 0.22, 0]}><boxGeometry args={[34, 0.18, 18]} /><meshStandardMaterial color={night ? '#dce5ed' : '#f7fbff'} roughness={0.22} metalness={0.12} /></mesh>
+        <mesh position={[0, 0.35, 0]}><boxGeometry args={[32, 0.06, 16]} /><meshStandardMaterial color="#7ce7ff" emissive="#7ce7ff" emissiveIntensity={night ? 0.92 : 0.08} /></mesh>
+        <mesh position={[0, 1.15, -8]}><boxGeometry args={[18, 1.8, 4]} /><meshStandardMaterial color="#101826" roughness={0.48} metalness={0.24} /></mesh>
+        <mesh position={[0, 2.1, -7.9]}><boxGeometry args={[17.6, 0.08, 0.08]} /><meshStandardMaterial color="#ffd166" emissive="#ffd166" emissiveIntensity={night ? 0.8 : 0.08} /></mesh>
+        <Text position={[0, 3.9, -7.8]} fontSize={0.72} color="#ffffff" anchorX="center">PLAZA PREMIUM</Text>
+        {[-10, -3, 4, 11].map((x, i) => (
+          <group key={`plaza-tower-${i}`} position={[x, 0.12, 5.6]}>
+            <mesh position={[0, 1.35, 0]}><boxGeometry args={[3.1, 2.7, 3.1]} /><meshStandardMaterial color={i % 2 === 0 ? '#12263f' : '#1d354d'} roughness={0.34} metalness={0.18} /></mesh>
+            <mesh position={[0, 2.92, 0]}><coneGeometry args={[1.2, 1.6, 4]} /><meshStandardMaterial color={i % 2 === 0 ? '#7ce7ff' : '#ffd166'} emissive={i % 2 === 0 ? '#7ce7ff' : '#ffd166'} emissiveIntensity={night ? 0.8 : 0.08} /></mesh>
+            <pointLight ref={(el) => { pulseRefs.current[i] = el; }} position={[0, 2.3, 0]} color={i % 2 === 0 ? '#7ce7ff' : '#ffd166'} intensity={night ? 0.22 : 0.08} distance={8} />
+          </group>
+        ))}
+      </group>
+
+      <group position={[-18, 0, -42]}>
+        <mesh position={[0, 0.16, 0]} rotation={[0, -0.18, 0]}><boxGeometry args={[24, 0.32, 3.2]} /><meshStandardMaterial color="#eef4f9" roughness={0.2} metalness={0.16} /></mesh>
+        <mesh position={[0, 2.1, 0]} rotation={[0, -0.18, 0]}><boxGeometry args={[23.7, 0.06, 0.12]} /><meshStandardMaterial color="#8fd9ff" emissive="#8fd9ff" emissiveIntensity={night ? 0.9 : 0.06} /></mesh>
+        {[-9, -3, 3, 9].map((x, i) => (
+          <mesh key={`skywalk-post-${i}`} position={[x, 1.1, 0]} rotation={[0, -0.18, 0]}><boxGeometry args={[0.18, 2.2, 0.18]} /><meshStandardMaterial color="#d6dfe8" metalness={0.7} roughness={0.14} /></mesh>
+        ))}
+        <Text position={[0, 2.9, 0]} fontSize={0.42} color="#eaf8ff" anchorX="center">SKYWALK</Text>
+      </group>
+
+      <group position={[42, 0, -18]}>
+        <mesh position={[0, 0.16, 0]}><boxGeometry args={[18, 0.32, 12]} /><meshStandardMaterial color={night ? '#dfe8f0' : '#f7fbff'} roughness={0.2} metalness={0.18} /></mesh>
+        <mesh position={[0, 1.1, -2.6]}><boxGeometry args={[16, 2.2, 4.2]} /><meshStandardMaterial color="#0f1723" roughness={0.36} metalness={0.16} /></mesh>
+        <mesh position={[0, 2.35, -2.5]}><boxGeometry args={[15.2, 0.06, 0.06]} /><meshStandardMaterial color="#7ce7ff" emissive="#7ce7ff" emissiveIntensity={night ? 1.1 : 0.08} /></mesh>
+        <Text position={[0, 3.8, -2.4]} fontSize={0.5} color="#ffffff" anchorX="center">VIP TERMINAL</Text>
+        {[-5.5, 0, 5.5].map((x, i) => (
+          <mesh key={`vip-pillar-${i}`} position={[x, 1.1, 4.2]}><cylinderGeometry args={[0.12, 0.18, 2.4, 8]} /><meshStandardMaterial color="#94a6b7" metalness={0.68} roughness={0.14} /></mesh>
+        ))}
+      </group>
+
+      <group position={[-54, 0, 170]}>
+        <mesh position={[0, 1.1, 0]}><cylinderGeometry args={[16, 18, 2.2, 24]} /><meshStandardMaterial color={night ? '#233746' : '#e8eff5'} roughness={0.7} metalness={0.08} /></mesh>
+        <mesh position={[0, 2.45, 0]} rotation={[0, 0.15, 0]}><boxGeometry args={[12, 3.1, 12]} /><meshStandardMaterial color="#132538" roughness={0.34} metalness={0.18} /></mesh>
+        <mesh position={[0, 4.15, 0]} rotation={[0, 0.15, 0]}><coneGeometry args={[5.6, 2.1, 5]} /><meshStandardMaterial color="#8ef0a7" emissive="#8ef0a7" emissiveIntensity={night ? 0.65 : 0.06} /></mesh>
+        <Text position={[0, 6.1, 0]} fontSize={0.48} color="#ffffff" anchorX="center">ÎLE CULTURE</Text>
+      </group>
+
+      <group position={[74, 0, -44]}>
+        <mesh position={[0, 0.16, 0]}><boxGeometry args={[22, 0.32, 6]} /><meshStandardMaterial color="#f7fbff" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 0.95, 0]}><boxGeometry args={[16, 1.5, 3.2]} /><meshStandardMaterial color="#0d1320" roughness={0.42} metalness={0.18} /></mesh>
+        <Text position={[0, 2.4, 0]} fontSize={0.45} color="#ffe0f3" anchorX="center">PAVILLON ART</Text>
+      </group>
+
+      {skylineBuildings.map((b, i) => (
+        <group key={`skyline-${i}`} position={[b.x, 0, b.z]}>
+          <mesh position={[0, b.h / 2, 0]}><boxGeometry args={[b.w, b.h, b.d]} /><meshStandardMaterial color={night ? '#283340' : '#b8c8d8'} roughness={0.22} metalness={0.34} /></mesh>
+        </group>
+      ))}
+    </group>
+  );
+}
+
+function HubGameplayLayer({ tod, isTouchDevice, controlsRef, cameraRef, active }) {
+  const playerRef = useRef();
+  const carRef = useRef();
+  const boatRef = useRef();
+  const [interactionPrompt, setInteractionPrompt] = useState(null);
+  const promptSignatureRef = useRef('');
+  const inputRef = useRef({ up: false, down: false, left: false, right: false, jump: false, interact: false, sprint: false });
+  const mouseRef = useRef({ dragging: false, dx: 0, dy: 0 });
+  const modeRef = useRef('walk');
+  const activeVehicleRef = useRef(null);
+  const interiorRef = useRef('none');
+  const playerPosRef = useRef(new THREE.Vector3(14, 0.15, -18));
+  const playerVelRef = useRef(new THREE.Vector3());
+  const playerYawRef = useRef(0);
+  const playerJumpVelRef = useRef(0);
+  const cameraOffsetRef = useRef(new THREE.Vector3(0, 4.2, 8.5));
+  const vehicleStateRef = useRef({
+    car: { pos: new THREE.Vector3(24, 0.18, -22), vel: new THREE.Vector3(), yaw: Math.PI * 0.82 },
+    boat: { pos: new THREE.Vector3(6, 0.05, -12), vel: new THREE.Vector3(), yaw: Math.PI * 0.2 },
+    yacht: { pos: new THREE.Vector3(-16, 0.18, 10.2), vel: new THREE.Vector3(), yaw: 0.16 },
+    carrier: { pos: new THREE.Vector3(55, 2.4, 52), vel: new THREE.Vector3(), yaw: 0 },
+    train: { pos: new THREE.Vector3(45, -1.35, -36.25), vel: new THREE.Vector3(), yaw: 0 },
+  });
+  const interiorSpawnMap = useMemo(() => ({
+    marina: new THREE.Vector3(204, 0.18, 200),
+    station: new THREE.Vector3(228, 0.18, 200),
+    mall: new THREE.Vector3(252, 0.18, 200),
+  }), []);
+  const playBounds = useMemo(() => ({ minX: -132, maxX: 132, minZ: -186, maxZ: 186 }), []);
+  const boardingProfiles = useMemo(() => ({
+    car: {
+      label: 'Voiture',
+      badge: 'AUTO',
+      seat: [0.15, 0.82, 0.18],
+      door: [1.55, 0.18, 0.35],
+      exit: [2.35, 0.18, 0.95],
+    },
+    boat: {
+      label: 'Bateau',
+      badge: 'DECK',
+      seat: [0.0, 0.62, 0.65],
+      door: [1.2, 0.18, 1.9],
+      exit: [1.95, 0.18, 2.65],
+    },
+    yacht: {
+      label: 'Mega yacht',
+      badge: 'YACHT',
+      seat: [0.0, 2.7, 5.2],
+      door: [2.4, 1.9, 7.9],
+      exit: [3.8, 1.5, 9.3],
+    },
+    carrier: {
+      label: 'Porte-avions',
+      badge: 'CARRIER',
+      seat: [0.0, 4.2, -10.8],
+      door: [6.1, 2.8, -8.8],
+      exit: [8.8, 2.0, -4.6],
+    },
+    train: {
+      label: 'Train',
+      badge: 'TRAIN',
+      seat: [0.0, 0.45, 0.2],
+      door: [1.5, 0.15, 2.1],
+      exit: [2.4, 0.12, -2.5],
+    },
+    marina: {
+      label: 'Marina Land',
+      badge: 'DOOR',
+      seat: [0.0, 0.1, 0.0],
+      door: [0.0, 0.1, -4.5],
+      exit: [-7.8, 0.18, -2.4],
+    },
+    station: {
+      label: 'Gare',
+      badge: 'DOOR',
+      seat: [0.0, 0.1, 0.0],
+      door: [0.0, 0.1, -3.9],
+      exit: [-7.8, 0.18, -2.2],
+    },
+    mall: {
+      label: 'Mall',
+      badge: 'DOOR',
+      seat: [0.0, 0.1, 0.0],
+      door: [0.0, 0.1, -4.6],
+      exit: [-8.0, 0.18, -2.4],
+    },
+  }), []);
+
+  const clearManualVehicleFlags = () => {
+    delete window.__coastalTrainManual;
+    delete window.__coastalTrainManualState;
+    delete window.__superyachtManual;
+    delete window.__superyachtManualState;
+    delete window.__carrierManual;
+    delete window.__carrierManualState;
+  };
+
+  const setVehicleMode = (nextMode, payload = null) => {
+    modeRef.current = nextMode;
+    if (nextMode === 'walk') {
+      activeVehicleRef.current = null;
+      interiorRef.current = 'none';
+      clearManualVehicleFlags();
+      if (window) window.__hubGameplayMode = 'walk';
+      return;
+    }
+    if (nextMode === 'interior') {
+      activeVehicleRef.current = null;
+      clearManualVehicleFlags();
+      interiorRef.current = payload?.interior || 'marina';
+      if (window) window.__hubGameplayMode = 'interior';
+      return;
+    }
+    activeVehicleRef.current = nextMode;
+    interiorRef.current = 'none';
+    if (payload?.state) {
+      const manualState = payload.state;
+      if (nextMode === 'train') {
+        window.__coastalTrainManual = true;
+        window.__coastalTrainManualState = manualState;
+      } else if (nextMode === 'yacht') {
+        window.__superyachtManual = true;
+        window.__superyachtManualState = manualState;
+      } else if (nextMode === 'carrier') {
+        window.__carrierManual = true;
+        window.__carrierManualState = manualState;
+      }
+    }
+    if (window) window.__hubGameplayMode = nextMode;
+  };
+
+  const resolveWorldPosition = (value, fallback) => {
+    if (value instanceof THREE.Vector3) return value.clone();
+    if (value && typeof value.x === 'number' && typeof value.z === 'number') {
+      return new THREE.Vector3(value.x, typeof value.y === 'number' ? value.y : fallback.y, value.z);
+    }
+    return fallback.clone();
+  };
+
+  const rotateOffset = (base, yaw, offset) => {
+    const [right = 0, up = 0, forward = 0] = offset;
+    const forwardVec = new THREE.Vector3(Math.sin(yaw || 0), 0, Math.cos(yaw || 0));
+    const rightVec = new THREE.Vector3(forwardVec.z, 0, -forwardVec.x);
+    return base.clone()
+      .addScaledVector(rightVec, right)
+      .addScaledVector(forwardVec, forward)
+      .add(new THREE.Vector3(0, up, 0));
+  };
+
+  const getTargetPose = (target) => {
+    if (!target) return null;
+    const basePos = target.position instanceof THREE.Vector3 ? target.position.clone() : target.position;
+    const fallbackYaw = target.key === 'train' ? 0 : target.key === 'carrier' ? 0.05 : target.key === 'yacht' ? 0.16 : 0;
+    const state = vehicleStateRef.current[target.key] || null;
+    const yaw = state?.yaw ?? fallbackYaw;
+    const profile = boardingProfiles[target.key] || boardingProfiles.car;
+    return { basePos, yaw, profile, state };
+  };
+
+  const getBoardingPose = (target, poseKind = 'seat') => {
+    const pose = getTargetPose(target);
+    if (!pose) return null;
+    const offset = pose.profile[poseKind] || pose.profile.seat;
+    return rotateOffset(pose.basePos, pose.yaw, offset);
+  };
+
+  const interactionTargets = useMemo(() => ([
+    { key: 'car', mode: 'car', label: 'Voiture', radius: 4.2, position: () => vehicleStateRef.current.car.pos.clone().add(new THREE.Vector3(0, 0, 0)) },
+    { key: 'boat', mode: 'boat', label: 'Bateau', radius: 4.6, position: () => vehicleStateRef.current.boat.pos.clone().add(new THREE.Vector3(0, 0, 0)) },
+    { key: 'yacht', mode: 'yacht', label: 'Mega yacht', radius: 10, position: () => resolveWorldPosition(window.__superyachtPos, vehicleStateRef.current.yacht.pos) },
+    { key: 'carrier', mode: 'carrier', label: 'Porte-avions', radius: 14, position: () => resolveWorldPosition(window.__carrierPos, vehicleStateRef.current.carrier.pos) },
+    { key: 'train', mode: 'train', label: 'Train', radius: 8, position: () => resolveWorldPosition(window.__coastalTrainPos, vehicleStateRef.current.train.pos) },
+    { key: 'marina', mode: 'interior', interior: 'marina', label: 'Marina Land', radius: 8, position: () => new THREE.Vector3(38, 0.2, -12) },
+    { key: 'station', mode: 'interior', interior: 'station', label: 'Gare', radius: 8, position: () => new THREE.Vector3(45, 0.2, -40) },
+    { key: 'mall', mode: 'interior', interior: 'mall', label: 'Mall', radius: 8, position: () => new THREE.Vector3(-18, 0.2, -72) },
+  ]), []);
+
+  const updatePrompt = (nextPrompt) => {
+    const signature = nextPrompt ? `${nextPrompt.title}|${nextPrompt.action}|${nextPrompt.detail}` : 'none';
+    if (promptSignatureRef.current === signature) return;
+    promptSignatureRef.current = signature;
+    setInteractionPrompt(nextPrompt);
+    window.__hubInteractionPrompt = nextPrompt;
+  };
+
+  useEffect(() => {
+    if (!active) return undefined;
+    if (controlsRef.current) controlsRef.current.enabled = false;
+    const onKeyDown = (event) => {
+      if (event.repeat) return;
+      const key = event.key.toLowerCase();
+      if (key === 'w' || key === 'arrowup') inputRef.current.up = true;
+      if (key === 's' || key === 'arrowdown') inputRef.current.down = true;
+      if (key === 'a' || key === 'arrowleft') inputRef.current.left = true;
+      if (key === 'd' || key === 'arrowright') inputRef.current.right = true;
+      if (key === ' ' || key === 'spacebar') inputRef.current.jump = true;
+      if (key === 'shift') inputRef.current.sprint = true;
+      if (key === 'e') inputRef.current.interact = true;
+    };
+    const onKeyUp = (event) => {
+      const key = event.key.toLowerCase();
+      if (key === 'w' || key === 'arrowup') inputRef.current.up = false;
+      if (key === 's' || key === 'arrowdown') inputRef.current.down = false;
+      if (key === 'a' || key === 'arrowleft') inputRef.current.left = false;
+      if (key === 'd' || key === 'arrowright') inputRef.current.right = false;
+      if (key === ' ' || key === 'spacebar') inputRef.current.jump = false;
+      if (key === 'shift') inputRef.current.sprint = false;
+      if (key === 'e') inputRef.current.interact = false;
+    };
+    const onPointerDown = (event) => {
+      if (event.button !== 0) return;
+      mouseRef.current.dragging = true;
+    };
+    const onPointerUp = () => {
+      mouseRef.current.dragging = false;
+      mouseRef.current.dx = 0;
+      mouseRef.current.dy = 0;
+    };
+    const onPointerMove = (event) => {
+      if (!mouseRef.current.dragging) return;
+      mouseRef.current.dx += event.movementX || 0;
+      mouseRef.current.dy += event.movementY || 0;
+    };
+    const onBlur = () => {
+      inputRef.current = { up: false, down: false, left: false, right: false, jump: false, interact: false, sprint: false };
+      mouseRef.current.dragging = false;
+      mouseRef.current.dx = 0;
+      mouseRef.current.dy = 0;
+    };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('pointerdown', onPointerDown);
+    window.addEventListener('pointerup', onPointerUp);
+    window.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      if (controlsRef.current) controlsRef.current.enabled = true;
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('pointerdown', onPointerDown);
+      window.removeEventListener('pointerup', onPointerUp);
+      window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [active]);
+
+  const readGamepad = () => {
+    const pads = navigator.getGamepads?.() || [];
+    const pad = pads.find((entry) => entry && entry.connected);
+    if (!pad) return null;
+    return {
+      lx: pad.axes?.[0] || 0,
+      ly: pad.axes?.[1] || 0,
+      rx: pad.axes?.[2] || 0,
+      ry: pad.axes?.[3] || 0,
+      a: !!pad.buttons?.[0]?.pressed,
+      b: !!pad.buttons?.[1]?.pressed,
+      x: !!pad.buttons?.[2]?.pressed,
+      y: !!pad.buttons?.[3]?.pressed,
+      lb: !!pad.buttons?.[4]?.pressed,
+      rb: !!pad.buttons?.[5]?.pressed,
+      start: !!pad.buttons?.[9]?.pressed,
+    };
+  };
+
+  useEffect(() => {
+    if (!active) return undefined;
+    window.__hubGameplayMode = 'walk';
+    window.__hubPlayerPos = playerPosRef.current;
+    window.__hubEnterPlayerMode = () => setVehicleMode('walk');
+    window.__hubExitVehicle = () => setVehicleMode('walk');
+    window.__hubEnterInterior = (interior = 'marina') => setVehicleMode('interior', { interior });
+    return () => {
+      clearManualVehicleFlags();
+      delete window.__hubGameplayMode;
+      delete window.__hubPlayerPos;
+      delete window.__hubEnterPlayerMode;
+      delete window.__hubExitVehicle;
+      delete window.__hubEnterInterior;
+    };
+  }, [active]);
+
+  useFrame((_, delta) => {
+    if (!active || !controlsRef.current || !cameraRef.current) return;
+    const cam = cameraRef.current;
+    const ctrl = controlsRef.current;
+    ctrl.enabled = false;
+    ctrl.autoRotate = false;
+
+    const gp = readGamepad();
+    const moveX = (gp ? gp.lx : 0) + (inputRef.current.right ? 1 : 0) - (inputRef.current.left ? 1 : 0);
+    const moveY = (gp ? gp.ly : 0) + (inputRef.current.down ? 1 : 0) - (inputRef.current.up ? 1 : 0);
+    const jumpPressed = inputRef.current.jump || !!gp?.a;
+    const interactPressed = inputRef.current.interact || !!gp?.x || !!gp?.y;
+    const sprintHeld = inputRef.current.sprint || !!gp?.rb;
+    const resolvedTargets = interactionTargets.map((target) => ({ ...target, position: target.position() }));
+    const nearestTarget = resolvedTargets.reduce((best, target) => {
+      const distance = playerPosRef.current.distanceTo(target.position);
+      if (!best || distance < best.distance) return { ...target, distance };
+      return best;
+    }, null);
+
+    const currentTargetPose = nearestTarget ? getTargetPose(nearestTarget) : null;
+    const currentProfile = currentTargetPose?.profile || null;
+    const boardingSeat = nearestTarget ? getBoardingPose(nearestTarget, 'seat') : null;
+    const boardingDoor = nearestTarget ? getBoardingPose(nearestTarget, 'door') : null;
+    const boardingExit = nearestTarget ? getBoardingPose(nearestTarget, 'exit') : null;
+    const isInsideInterior = modeRef.current === 'interior';
+
+    if (nearestTarget && nearestTarget.distance < Math.max(14, nearestTarget.radius * 1.35)) {
+      const action = isInsideInterior && nearestTarget.mode === 'interior' && interiorRef.current === nearestTarget.interior
+        ? 'Sortir'
+        : modeRef.current === nearestTarget.mode
+          ? 'Sortir'
+          : nearestTarget.mode === 'interior'
+            ? 'Entrer'
+            : 'Embarquer';
+      updatePrompt({
+        title: currentProfile?.label || nearestTarget.label,
+        badge: currentProfile?.badge || nearestTarget.label.toUpperCase(),
+        action,
+        detail: nearestTarget.mode === 'interior'
+          ? `${nearestTarget.interior === 'marina' ? 'Lobby + lounge' : nearestTarget.interior === 'station' ? 'Hall + quai' : 'Atrium + commerces'}`
+          : nearestTarget.mode === 'train'
+            ? 'porte, sièges, sortie quai'
+            : nearestTarget.mode === 'carrier'
+              ? 'pont, ascenseurs, passerelles'
+              : nearestTarget.mode === 'yacht'
+                ? 'pont supérieur, cabine, sortie arrière'
+                : nearestTarget.mode === 'boat'
+                  ? 'pont, cabine, sortie tribord'
+                  : 'habitacle, sièges, sortie latérale',
+        distance: nearestTarget.distance,
+      });
+    } else {
+      updatePrompt(null);
+    }
+
+    if (interactPressed && nearestTarget && nearestTarget.distance < nearestTarget.radius) {
+      if (modeRef.current === 'walk' || modeRef.current === 'interior') {
+        if (nearestTarget.mode === 'interior') {
+          const spawn = interiorSpawnMap[nearestTarget.interior] || interiorSpawnMap.marina;
+          setVehicleMode('interior', { interior: nearestTarget.interior });
+          playerPosRef.current.copy(spawn);
+          playerYawRef.current = nearestTarget.interior === 'station' ? Math.PI * 0.5 : 0;
+        } else {
+          const currentState = vehicleStateRef.current[nearestTarget.key] || vehicleStateRef.current.car;
+          setVehicleMode(nearestTarget.mode, { state: currentState });
+          const seatPose = boardingSeat || currentState.pos.clone();
+          playerPosRef.current.copy(seatPose);
+          playerYawRef.current = currentTargetPose?.yaw ?? 0;
+        }
+      } else {
+        const currentVehicle = vehicleStateRef.current[modeRef.current] || vehicleStateRef.current.car;
+        const exitPose = boardingExit || currentVehicle.pos.clone();
+        setVehicleMode('walk');
+        playerPosRef.current.copy(exitPose);
+      }
+      inputRef.current.interact = false;
+    } else if (interactPressed && modeRef.current === 'interior') {
+      const currentInterior = interiorRef.current || 'marina';
+      const spawn = interiorSpawnMap[currentInterior] || interiorSpawnMap.marina;
+      setVehicleMode('walk');
+      playerPosRef.current.set(spawn.x - 8, 0.18, spawn.z - 2.5);
+      inputRef.current.interact = false;
+    }
+
+    if (modeRef.current === 'walk' || modeRef.current === 'interior' || !activeVehicleRef.current) {
+      const walkSpeed = modeRef.current === 'interior' ? (sprintHeld ? 4.8 : 3.2) : (sprintHeld ? 7.2 : 4.8);
+      const yawBias = gp ? -gp.rx * 0.05 : 0;
+      if (Math.abs(mouseRef.current.dx) > 0.1) {
+        playerYawRef.current -= mouseRef.current.dx * 0.0022;
+      }
+      playerYawRef.current += yawBias;
+      const moveLength = Math.hypot(moveX, moveY);
+      const nx = moveLength > 0.05 ? moveX / moveLength : 0;
+      const ny = moveLength > 0.05 ? moveY / moveLength : 0;
+      const forward = new THREE.Vector3(Math.sin(playerYawRef.current), 0, Math.cos(playerYawRef.current));
+      const right = new THREE.Vector3(forward.z, 0, -forward.x);
+      const desired = new THREE.Vector3();
+      desired.addScaledVector(forward, -ny * walkSpeed);
+      desired.addScaledVector(right, nx * walkSpeed);
+      playerVelRef.current.x += (desired.x - playerVelRef.current.x) * Math.min(1, delta * 8.8);
+      playerVelRef.current.z += (desired.z - playerVelRef.current.z) * Math.min(1, delta * 8.8);
+      if (jumpPressed && playerPosRef.current.y <= 0.18 + 0.01 && modeRef.current !== 'interior') playerJumpVelRef.current = 5.2;
+      playerJumpVelRef.current -= (modeRef.current === 'interior' ? 11.5 : 14.5) * delta;
+      playerPosRef.current.addScaledVector(playerVelRef.current, delta);
+      const bounds = modeRef.current === 'interior'
+        ? { minX: (interiorSpawnMap[interiorRef.current || 'marina'].x - 8), maxX: (interiorSpawnMap[interiorRef.current || 'marina'].x + 8), minZ: (interiorSpawnMap[interiorRef.current || 'marina'].z - 6), maxZ: (interiorSpawnMap[interiorRef.current || 'marina'].z + 6) }
+        : playBounds;
+      playerPosRef.current.x = THREE.MathUtils.clamp(playerPosRef.current.x, bounds.minX, bounds.maxX);
+      playerPosRef.current.z = THREE.MathUtils.clamp(playerPosRef.current.z, bounds.minZ, bounds.maxZ);
+      playerPosRef.current.y = Math.max(modeRef.current === 'interior' ? 0.12 : 0.18, playerPosRef.current.y + playerJumpVelRef.current * delta);
+      if (playerPosRef.current.y <= 0.18) playerJumpVelRef.current = Math.max(0, playerJumpVelRef.current);
+      if (playerRef.current) {
+        playerRef.current.position.copy(playerPosRef.current);
+        playerRef.current.rotation.y = playerYawRef.current;
+      }
+      const desiredCam = new THREE.Vector3(
+        playerPosRef.current.x - Math.sin(playerYawRef.current) * 7.5,
+        playerPosRef.current.y + 4.6,
+        playerPosRef.current.z - Math.cos(playerYawRef.current) * 7.5,
+      );
+      cam.position.lerp(desiredCam, 0.08);
+      ctrl.target.lerp(new THREE.Vector3(playerPosRef.current.x, playerPosRef.current.y + 1.4, playerPosRef.current.z), 0.12);
+    } else {
+      const activeVehicle = vehicleStateRef.current[modeRef.current === 'boat' ? 'boat' : modeRef.current];
+      const turnInput = (gp ? gp.lx : 0) + (inputRef.current.right ? 1 : 0) - (inputRef.current.left ? 1 : 0);
+      const accelInput = (gp ? -gp.ly : 0) + (inputRef.current.up ? 1 : 0) - (inputRef.current.down ? 1 : 0);
+      const boost = sprintHeld ? 1.15 : 1;
+      const maxSpeed = modeRef.current === 'boat' ? 0.46 * boost : modeRef.current === 'train' ? 0.38 * boost : modeRef.current === 'carrier' ? 0.52 * boost : 0.58 * boost;
+      const turnSpeed = modeRef.current === 'boat' ? 0.038 : modeRef.current === 'train' ? 0.02 : modeRef.current === 'carrier' ? 0.03 : 0.05;
+      activeVehicle.yaw += turnInput * turnSpeed * (1 + Math.abs(accelInput) * 0.5);
+      const forward = new THREE.Vector3(Math.sin(activeVehicle.yaw), 0, Math.cos(activeVehicle.yaw));
+      const targetSpeed = accelInput * maxSpeed;
+      activeVehicle.vel.x += (forward.x * targetSpeed - activeVehicle.vel.x) * Math.min(1, delta * 5.5);
+      activeVehicle.vel.z += (forward.z * targetSpeed - activeVehicle.vel.z) * Math.min(1, delta * 5.5);
+      activeVehicle.pos.addScaledVector(activeVehicle.vel, delta * 8.5);
+      const vehicleBounds = modeRef.current === 'train'
+        ? { minX: -40, maxX: 90, minZ: -38.5, maxZ: -34.2 }
+        : modeRef.current === 'carrier'
+          ? { minX: -170, maxX: 160, minZ: 92, maxZ: 266 }
+          : modeRef.current === 'yacht'
+            ? { minX: -72, maxX: 44, minZ: -18, maxZ: 56 }
+            : { minX: playBounds.minX + 6, maxX: playBounds.maxX - 6, minZ: playBounds.minZ + 6, maxZ: playBounds.maxZ - 6 };
+      activeVehicle.pos.x = THREE.MathUtils.clamp(activeVehicle.pos.x, vehicleBounds.minX, vehicleBounds.maxX);
+      activeVehicle.pos.z = THREE.MathUtils.clamp(activeVehicle.pos.z, vehicleBounds.minZ, vehicleBounds.maxZ);
+      activeVehicle.vel.multiplyScalar(modeRef.current === 'boat' ? 0.992 : modeRef.current === 'train' ? 0.993 : 0.985);
+      if (modeRef.current === 'boat') {
+        activeVehicle.pos.y = 0.08 + Math.sin(performance.now() * 0.0015 + activeVehicle.pos.x * 0.02) * 0.04;
+      } else if (modeRef.current === 'train') {
+        activeVehicle.pos.y = -1.35;
+      } else if (modeRef.current === 'carrier') {
+        activeVehicle.pos.y = 2.4;
+      } else if (modeRef.current === 'yacht') {
+        activeVehicle.pos.y = 0.18;
+      } else {
+        activeVehicle.pos.y = 0.18;
+      }
+      const vehicleMesh = modeRef.current === 'boat' ? boatRef.current : modeRef.current === 'car' ? carRef.current : null;
+      if (vehicleMesh) {
+        vehicleMesh.position.copy(activeVehicle.pos);
+        vehicleMesh.rotation.y = activeVehicle.yaw;
+        vehicleMesh.rotation.z = modeRef.current === 'boat' ? Math.sin(performance.now() * 0.002 + activeVehicle.pos.x * 0.03) * 0.02 : 0;
+      }
+      if (playerRef.current) {
+        playerRef.current.position.set(activeVehicle.pos.x + Math.sin(activeVehicle.yaw + Math.PI * 0.5) * 1.25, activeVehicle.pos.y + 0.1, activeVehicle.pos.z + Math.cos(activeVehicle.yaw + Math.PI * 0.5) * 1.25);
+        playerRef.current.rotation.y = activeVehicle.yaw;
+        playerRef.current.visible = false;
+      }
+      const camOffset = modeRef.current === 'boat'
+        ? new THREE.Vector3(-Math.sin(activeVehicle.yaw) * 10, 5.2, -Math.cos(activeVehicle.yaw) * 10)
+        : modeRef.current === 'train'
+          ? new THREE.Vector3(-Math.sin(activeVehicle.yaw) * 12, 6.4, -Math.cos(activeVehicle.yaw) * 12)
+          : modeRef.current === 'carrier'
+            ? new THREE.Vector3(-Math.sin(activeVehicle.yaw) * 24, 14.5, -Math.cos(activeVehicle.yaw) * 24)
+            : modeRef.current === 'yacht'
+              ? new THREE.Vector3(-Math.sin(activeVehicle.yaw) * 13, 6.8, -Math.cos(activeVehicle.yaw) * 13)
+              : new THREE.Vector3(-Math.sin(activeVehicle.yaw) * 8.2, 4.3, -Math.cos(activeVehicle.yaw) * 8.2);
+      const desiredCam = activeVehicle.pos.clone().add(camOffset);
+      cam.position.lerp(desiredCam, 0.08);
+      ctrl.target.lerp(activeVehicle.pos.clone().add(new THREE.Vector3(0, 1.3, 0)), 0.12);
+      if (!interactPressed && !jumpPressed) {
+        inputRef.current.interact = false;
+      }
+    }
+
+    if (playerRef.current) playerRef.current.visible = modeRef.current === 'walk' || modeRef.current === 'interior';
+    if (Math.abs(mouseRef.current.dx) > 0.1) mouseRef.current.dx *= 0.8;
+    if (Math.abs(mouseRef.current.dy) > 0.1) mouseRef.current.dy *= 0.8;
+
+    window.__hubPlayerPos = { x: playerPosRef.current.x, y: playerPosRef.current.y, z: playerPosRef.current.z };
+    window.__hubGameplayMode = modeRef.current;
+  });
+
+  return (
+    <>
+      {createPortal(
+        interactionPrompt ? (
+          <div className="pointer-events-none fixed left-1/2 top-5 z-20 -translate-x-1/2 rounded-2xl border border-cyan-200/30 bg-slate-950/70 px-4 py-3 text-white shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 18px 48px rgba(8, 145, 178, 0.24)' }}>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full border border-cyan-200/40 bg-cyan-400/15 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-100">{interactionPrompt.badge}</span>
+              <div>
+                <div className="text-xs font-semibold text-white">{interactionPrompt.title}</div>
+                <div className="text-[10px] uppercase tracking-[0.18em] text-cyan-100/75">{interactionPrompt.action} - {interactionPrompt.detail}</div>
+              </div>
+            </div>
+            <div className="mt-2 text-[10px] text-slate-200/80">{interactionPrompt.distance.toFixed(1)} m - E / X pour agir</div>
+          </div>
+        ) : null,
+        document.body,
+      )}
+      <group>
+      <group ref={playerRef} position={[playerPosRef.current.x, playerPosRef.current.y, playerPosRef.current.z]} visible>
+          <HubPlayerAvatar />
+      </group>
+
+      <group ref={carRef} position={[24, 0.18, -22]} visible>
+        <mesh position={[0, 0.42, 0]}>
+          <boxGeometry args={[1.9, 0.52, 3.6]} />
+          <meshStandardMaterial color="#ff4b5c" roughness={0.2} metalness={0.5} envMapIntensity={1.1} />
+        </mesh>
+        <mesh position={[0, 0.88, -0.14]}>
+          <boxGeometry args={[1.5, 0.58, 1.7]} />
+          <meshStandardMaterial color="#08111c" roughness={0.08} metalness={0.16} transparent opacity={0.82} />
+        </mesh>
+        <mesh position={[0, 0.62, 1.14]}>
+          <boxGeometry args={[1.18, 0.08, 0.08]} />
+          <meshStandardMaterial color="#7ce7ff" emissive="#7ce7ff" emissiveIntensity={0.38} />
+        </mesh>
+        <mesh position={[-0.88, 0.12, 1.1]}><cylinderGeometry args={[0.18, 0.18, 0.12, 10]} /><meshStandardMaterial color="#10161d" /></mesh>
+        <mesh position={[0.88, 0.12, 1.1]}><cylinderGeometry args={[0.18, 0.18, 0.12, 10]} /><meshStandardMaterial color="#10161d" /></mesh>
+        <mesh position={[-0.88, 0.12, -1.1]}><cylinderGeometry args={[0.18, 0.18, 0.12, 10]} /><meshStandardMaterial color="#10161d" /></mesh>
+        <mesh position={[0.88, 0.12, -1.1]}><cylinderGeometry args={[0.18, 0.18, 0.12, 10]} /><meshStandardMaterial color="#10161d" /></mesh>
+      </group>
+
+      <group ref={boatRef} position={[6, 0.05, -12]} visible>
+        <mesh position={[0, 0.22, 0]}>
+          <boxGeometry args={[1.6, 0.3, 4.4]} />
+          <meshStandardMaterial color="#1a5fa8" roughness={0.2} metalness={0.44} envMapIntensity={1.05} />
+        </mesh>
+        <mesh position={[0, 0.46, -0.1]}>
+          <boxGeometry args={[1.22, 0.42, 1.4]} />
+          <meshStandardMaterial color="#f4f7fa" roughness={0.12} metalness={0.16} />
+        </mesh>
+        <mesh position={[0, 0.88, -0.42]}>
+          <cylinderGeometry args={[0.06, 0.08, 1.5, 8]} />
+          <meshStandardMaterial color="#dfe8f0" metalness={0.7} roughness={0.12} />
+        </mesh>
+        <mesh position={[0, 0.62, 1.4]}>
+          <boxGeometry args={[0.78, 0.08, 0.6]} />
+          <meshStandardMaterial color="#f6fbff" emissive="#7ce7ff" emissiveIntensity={0.25} />
+        </mesh>
+        <Text position={[0, 1.0, 1.42]} fontSize={0.16} color="#e8f8ff" anchorX="center">Pont</Text>
+        <mesh position={[0.55, 0.38, 0.15]}>
+          <boxGeometry args={[0.08, 0.18, 0.42]} />
+          <meshStandardMaterial color="#7ce7ff" emissive="#7ce7ff" emissiveIntensity={0.38} />
+        </mesh>
+      </group>
+
+      <group position={[interiorSpawnMap.marina.x, 0, interiorSpawnMap.marina.z]}>
+        <mesh position={[0, 0.02, 0]}><boxGeometry args={[16, 0.12, 14]} /><meshStandardMaterial color="#f5f8fb" roughness={0.24} metalness={0.14} /></mesh>
+        <mesh position={[0, 3.4, 0]}><boxGeometry args={[16, 0.12, 14]} /><meshStandardMaterial color="#dce5ed" roughness={0.28} metalness={0.12} transparent opacity={0.92} /></mesh>
+        <mesh position={[0, 1.7, -6.9]}><boxGeometry args={[16, 3.4, 0.12]} /><meshStandardMaterial color="#e9eff5" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.7, 6.9]}><boxGeometry args={[16, 3.4, 0.12]} /><meshStandardMaterial color="#e9eff5" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[-7.9, 1.7, 0]}><boxGeometry args={[0.12, 3.4, 14]} /><meshStandardMaterial color="#e9eff5" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[7.9, 1.7, 0]}><boxGeometry args={[0.12, 3.4, 14]} /><meshStandardMaterial color="#e9eff5" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.0, 0]}><boxGeometry args={[4.8, 1.1, 1.2]} /><meshStandardMaterial color="#17324f" emissive="#7ce7ff" emissiveIntensity={0.4} /></mesh>
+        <Text position={[0, 2.45, 0]} fontSize={0.56} color="#17324f" anchorX="center" fontWeight="bold">MARINA LAND LOBBY</Text>
+        <mesh position={[0, 0.82, -4.8]}><boxGeometry args={[2.8, 1.6, 0.08]} /><meshStandardMaterial color="#7ce7ff" emissive="#7ce7ff" emissiveIntensity={0.5} transparent opacity={0.7} /></mesh>
+        <Text position={[0, 0.9, -4.68]} fontSize={0.26} color="#ffffff" anchorX="center" fontWeight="bold">E SORTIR</Text>
+      </group>
+
+      <group position={[interiorSpawnMap.station.x, 0, interiorSpawnMap.station.z]}>
+        <mesh position={[0, 0.02, 0]}><boxGeometry args={[18, 0.12, 12]} /><meshStandardMaterial color="#f1f4f8" roughness={0.22} metalness={0.12} /></mesh>
+        <mesh position={[0, 3.0, 0]}><boxGeometry args={[18, 0.12, 12]} /><meshStandardMaterial color="#d5dce4" roughness={0.26} metalness={0.12} transparent opacity={0.92} /></mesh>
+        <mesh position={[0, 1.5, -5.9]}><boxGeometry args={[18, 3, 0.12]} /><meshStandardMaterial color="#e3e8ee" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.5, 5.9]}><boxGeometry args={[18, 3, 0.12]} /><meshStandardMaterial color="#e3e8ee" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[-8.9, 1.5, 0]}><boxGeometry args={[0.12, 3, 12]} /><meshStandardMaterial color="#e3e8ee" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[8.9, 1.5, 0]}><boxGeometry args={[0.12, 3, 12]} /><meshStandardMaterial color="#e3e8ee" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.05, 0]}><boxGeometry args={[5.4, 1.05, 1]} /><meshStandardMaterial color="#0f2746" emissive="#00CCFF" emissiveIntensity={0.45} /></mesh>
+        <Text position={[0, 2.2, 0]} fontSize={0.52} color="#0f2746" anchorX="center" fontWeight="bold">GARE INTÉRIEURE</Text>
+        <mesh position={[0, 0.82, -4.1]}><boxGeometry args={[3.4, 1.4, 0.08]} /><meshStandardMaterial color="#00CCFF" emissive="#00CCFF" emissiveIntensity={0.6} transparent opacity={0.72} /></mesh>
+        <Text position={[0, 0.9, -3.98]} fontSize={0.26} color="#ffffff" anchorX="center" fontWeight="bold">E SORTIR</Text>
+      </group>
+
+      <group position={[interiorSpawnMap.mall.x, 0, interiorSpawnMap.mall.z]}>
+        <mesh position={[0, 0.02, 0]}><boxGeometry args={[20, 0.12, 14]} /><meshStandardMaterial color="#f4f6fb" roughness={0.22} metalness={0.12} /></mesh>
+        <mesh position={[0, 3.2, 0]}><boxGeometry args={[20, 0.12, 14]} /><meshStandardMaterial color="#dbe2eb" roughness={0.26} metalness={0.12} transparent opacity={0.92} /></mesh>
+        <mesh position={[0, 1.6, -6.9]}><boxGeometry args={[20, 3.2, 0.12]} /><meshStandardMaterial color="#e9edf2" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.6, 6.9]}><boxGeometry args={[20, 3.2, 0.12]} /><meshStandardMaterial color="#e9edf2" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[-9.9, 1.6, 0]}><boxGeometry args={[0.12, 3.2, 14]} /><meshStandardMaterial color="#e9edf2" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[9.9, 1.6, 0]}><boxGeometry args={[0.12, 3.2, 14]} /><meshStandardMaterial color="#e9edf2" roughness={0.2} metalness={0.12} /></mesh>
+        <mesh position={[0, 1.0, 0]}><boxGeometry args={[5.8, 1.0, 1.2]} /><meshStandardMaterial color="#17324f" emissive="#ff7eb6" emissiveIntensity={0.45} /></mesh>
+        <Text position={[0, 2.35, 0]} fontSize={0.56} color="#17324f" anchorX="center" fontWeight="bold">MALL SKY ATRIUM</Text>
+        <mesh position={[0, 0.82, -4.8]}><boxGeometry args={[3.1, 1.4, 0.08]} /><meshStandardMaterial color="#ff7eb6" emissive="#ff7eb6" emissiveIntensity={0.6} transparent opacity={0.72} /></mesh>
+        <Text position={[0, 0.9, -4.68]} fontSize={0.26} color="#ffffff" anchorX="center" fontWeight="bold">E SORTIR</Text>
+      </group>
+      </group>
+    </>
+  );
+}
+
+function HubPlayerAvatar({}) {
+  return (
+    <group>
+      <mesh position={[0, 0.98, 0]}>
+        <capsuleGeometry args={[0.16, 0.46, 6, 12]} />
+        <meshStandardMaterial color="#f5fbff" roughness={0.52} metalness={0.06} />
+      </mesh>
+      <mesh position={[0, 0.28, 0]}>
+        <capsuleGeometry args={[0.15, 0.38, 6, 10]} />
+        <meshStandardMaterial color="#1a5fa8" roughness={0.3} metalness={0.22} emissive="#0b1320" emissiveIntensity={0.05} />
+      </mesh>
+      <mesh position={[0, 1.58, 0.03]}>
+        <sphereGeometry args={[0.18, 18, 18]} />
+        <meshStandardMaterial color="#e9b38d" roughness={0.72} metalness={0.03} />
+      </mesh>
+      <mesh position={[0, 1.71, 0.17]}>
+        <sphereGeometry args={[0.042, 8, 8]} />
+        <meshStandardMaterial color="#111827" />
+      </mesh>
+      <mesh position={[0.06, 1.71, 0.17]}>
+        <sphereGeometry args={[0.042, 8, 8]} />
+        <meshStandardMaterial color="#111827" />
+      </mesh>
+      <mesh position={[-0.12, 0.6, 0]} rotation={[0, 0, 0.24]}>
+        <capsuleGeometry args={[0.036, 0.36, 6, 10]} />
+        <meshStandardMaterial color="#f2c8a0" roughness={0.56} />
+      </mesh>
+      <mesh position={[0.12, 0.6, 0]} rotation={[0, 0, -0.24]}>
+        <capsuleGeometry args={[0.036, 0.36, 6, 10]} />
+        <meshStandardMaterial color="#f2c8a0" roughness={0.56} />
+      </mesh>
+      <mesh position={[-0.1, 0.03, 0.02]}>
+        <capsuleGeometry args={[0.05, 0.4, 6, 12]} />
+        <meshStandardMaterial color="#111827" roughness={0.62} metalness={0.06} />
+      </mesh>
+      <mesh position={[0.1, 0.03, 0.02]}>
+        <capsuleGeometry args={[0.05, 0.4, 6, 12]} />
+        <meshStandardMaterial color="#111827" roughness={0.62} metalness={0.06} />
+      </mesh>
+      <mesh position={[-0.1, -0.22, 0.03]}>
+        <boxGeometry args={[0.14, 0.08, 0.22]} />
+        <meshStandardMaterial color="#202938" roughness={0.4} metalness={0.08} />
+      </mesh>
+      <mesh position={[0.1, -0.22, 0.03]}>
+        <boxGeometry args={[0.14, 0.08, 0.22]} />
+        <meshStandardMaterial color="#202938" roughness={0.4} metalness={0.08} />
+      </mesh>
+    </group>
+  );
+}
+
+function HubEventScenery({ tod, scenario = 'premium', season = 'summer' }) {
+  const night = tod < 0.18 || tod > 0.82;
+  const portLightRefs = useRef([]);
+  const runwayLightRefs = useRef([]);
+  const fireworkRefs = useRef([]);
+
+  const palette = useMemo(() => ({
+    summer: { main: '#7ce7ff', glow: '#fff1bf', accent: '#ff7eb6', ground: '#00c8ff' },
+    spring: { main: '#8ef0a7', glow: '#ffe0f3', accent: '#ff9ecb', ground: '#9ee7c5' },
+    winter: { main: '#cfe8ff', glow: '#fffaf0', accent: '#8fd9ff', ground: '#d7e9f7' },
+    national: { main: '#ff4b5c', glow: '#ffd166', accent: '#2f80ed', ground: '#ffffff' },
+  }), []);
+  const tone = palette[season] || palette.summer;
+  const premiumMode = scenario === 'premium';
+
+  useFrame(({ clock }) => {
+    const t = clock.getElapsedTime();
+    portLightRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+      ref.position.y = 5.1 + Math.sin(t * 1.8 + index) * 0.18;
+      ref.intensity = night ? 0.24 + Math.max(0, Math.sin(t * 2.2 + index)) * 0.26 : 0.12;
+    });
+    runwayLightRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+      ref.rotation.y = t * 0.28 + index * 0.12;
+      ref.position.y = 4.4 + Math.sin(t * 0.9 + index) * 0.05;
+    });
+    fireworkRefs.current.forEach((ref, index) => {
+      if (!ref) return;
+      const burst = 0.55 + Math.max(0, Math.sin(t * 1.35 + index * 1.7));
+      ref.scale.setScalar(burst);
+      ref.position.y = 18 + index * 2.2 + Math.sin(t * 1.1 + index) * 0.9;
+      ref.rotation.y = t * 0.35 + index * 0.8;
+    });
+  });
+
+  const showFestival = premiumMode || scenario === 'festival' || scenario === 'concert' || scenario === 'parade';
+  const showMarket = premiumMode || scenario === 'market';
+  const showFashion = premiumMode || scenario === 'fashion';
+  const showSports = premiumMode || scenario === 'sports';
+  const showFireworks = premiumMode || scenario === 'fireworks' || season === 'national';
+
+  return (
+    <group>
+      {showFestival && (
+        <group position={[34, 0.15, 24]}>
+          {[-10, -4, 2, 8, 14].map((x, i) => (
+            <group key={`festival-pole-${i}`} position={[x, 0, 0]}>
+              <mesh position={[0, 2.8, 0]}><cylinderGeometry args={[0.09, 0.11, 5.6, 8]} /><meshStandardMaterial color="#5f7287" metalness={0.7} roughness={0.16} /></mesh>
+              <pointLight ref={(el) => { portLightRefs.current[i] = el; }} position={[0, 5.2, 0]} color={tone.glow} intensity={night ? 0.22 : 0.08} distance={9.5} />
+              <mesh position={[0, 5.2, 0]}><sphereGeometry args={[0.14, 8, 8]} /><meshStandardMaterial color={tone.glow} emissive={tone.glow} emissiveIntensity={night ? 2.2 : 0.25} /></mesh>
+            </group>
+          ))}
+          <mesh position={[1.5, 1.55, 0]}><boxGeometry args={[16, 0.35, 7]} /><meshStandardMaterial color="#101826" roughness={0.6} metalness={0.18} /></mesh>
+          <mesh position={[1.5, 2.3, 0]}><boxGeometry args={[12, 0.25, 4.6]} /><meshStandardMaterial color="#17263a" roughness={0.45} metalness={0.16} /></mesh>
+          <mesh position={[1.5, 3.8, -0.4]}><boxGeometry args={[5.2, 2.4, 0.28]} /><meshStandardMaterial color="#0d1624" roughness={0.5} metalness={0.18} /></mesh>
+          <mesh position={[1.5, 3.78, -0.28]}><boxGeometry args={[4.8, 2.0, 0.08]} /><meshStandardMaterial color={tone.main} emissive={tone.main} emissiveIntensity={night ? 0.8 : 0.08} /></mesh>
+          <Text position={[1.5, 5.7, 0]} fontSize={0.82} color={tone.glow} anchorX="center">PORT LIGHT FEST</Text>
+          <group position={[1.5, 0.34, 2.6]}>
+            {[[-5.4, 0], [-2.4, 0], [0.2, 0], [2.8, 0], [5.3, 0]].map(([x, z], idx) => (
+              <group key={`festival-crowd-${idx}`} position={[x, 0, z]}>
+                <mesh position={[0, 0.45, 0]}><capsuleGeometry args={[0.12, 0.46, 4, 8]} /><meshStandardMaterial color={idx % 2 === 0 ? '#2a3441' : '#4d2f3e'} roughness={0.78} /></mesh>
+                <mesh position={[0, 1.0, 0]}><sphereGeometry args={[0.15, 10, 10]} /><meshStandardMaterial color={idx % 2 === 0 ? '#d8a37e' : '#b97b61'} roughness={0.9} /></mesh>
+              </group>
+            ))}
+          </group>
+        </group>
+      )}
+
+      {showMarket && (
+        <group position={[-16, 0.08, 146]}>
+          {[-10, -4, 2, 8].map((x, i) => (
+            <group key={`market-stall-${i}`} position={[x, 0, 0]}>
+              <mesh position={[0, 1.1, 0]}><boxGeometry args={[2.8, 1.4, 2.1]} /><meshStandardMaterial color={i % 2 === 0 ? '#f7f2df' : '#f6e1c1'} roughness={0.82} metalness={0.08} /></mesh>
+              <mesh position={[0, 2.1, 0]}><coneGeometry args={[1.8, 1.0, 4]} /><meshStandardMaterial color={i % 2 === 0 ? tone.accent : tone.main} emissive={i % 2 === 0 ? tone.accent : tone.main} emissiveIntensity={night ? 0.8 : 0.08} /></mesh>
+              <mesh position={[0, 0.42, 0]}><boxGeometry args={[2.6, 0.24, 1.8]} /><meshStandardMaterial color="#2f3948" roughness={0.58} metalness={0.14} /></mesh>
+              <Text position={[0, 2.72, 0]} fontSize={0.34} color="#ffffff" anchorX="center">{i % 2 === 0 ? 'MARCHÉ' : 'ART'}</Text>
+              <pointLight position={[0, 2.2, 0.9]} color={tone.glow} intensity={night ? 0.18 : 0.06} distance={5.5} />
+            </group>
+          ))}
+          <Text position={[0.4, 4.5, 0]} fontSize={0.72} color={tone.glow} anchorX="center">MARCHÉ NOCTURNE</Text>
+          {season === 'spring' && (
+            <group position={[0, 0.1, 4.8]}>
+              {[-5, -2, 1, 4].map((x, i) => (
+                <mesh key={`market-flower-${i}`} position={[x, 0.2, 0]}><sphereGeometry args={[0.22, 8, 8]} /><meshStandardMaterial color={i % 2 === 0 ? '#ff9ecb' : '#8ef0a7'} emissive={i % 2 === 0 ? '#ff9ecb' : '#8ef0a7'} emissiveIntensity={0.35} /></mesh>
+              ))}
+            </group>
+          )}
+        </group>
+      )}
+
+      {showFashion && (
+        <group position={[4, 0.12, -36]}>
+          <mesh position={[0, 0.2, 0]}><boxGeometry args={[26, 0.22, 3.4]} /><meshStandardMaterial color="#0b1320" roughness={0.38} metalness={0.22} /></mesh>
+          <mesh position={[0, 0.33, 0]}><boxGeometry args={[25.6, 0.04, 0.28]} /><meshStandardMaterial color={tone.main} emissive={tone.main} emissiveIntensity={night ? 1.8 : 0.12} /></mesh>
+          <mesh position={[0, 0.33, 1.46]}><boxGeometry args={[25.6, 0.04, 0.28]} /><meshStandardMaterial color={tone.glow} emissive={tone.glow} emissiveIntensity={night ? 1.8 : 0.12} /></mesh>
+          {[-11.5, -7.6, -3.8, 0, 3.8, 7.6, 11.5].map((x, i) => (
+            <group key={`runway-seat-${i}`} position={[x, 0, 4.4]}>
+              <mesh position={[0, 0.42, 0]}><boxGeometry args={[2.0, 0.84, 1.8]} /><meshStandardMaterial color={i % 2 === 0 ? '#162030' : '#1f3142'} roughness={0.72} metalness={0.1} /></mesh>
+              <mesh position={[0, 1.18, 0]}><sphereGeometry args={[0.16, 8, 8]} /><meshStandardMaterial color={tone.glow} emissive={tone.glow} emissiveIntensity={night ? 1.2 : 0.12} /></mesh>
+            </group>
+          ))}
+          {[-9, 9].map((x, i) => (
+            <group key={`runway-light-${i}`} position={[x, 0, -2.4]}>
+              <mesh position={[0, 2.4, 0]}><cylinderGeometry args={[0.06, 0.08, 4.8, 8]} /><meshStandardMaterial color="#d8dfea" metalness={0.72} roughness={0.12} /></mesh>
+              <spotLight ref={(el) => { runwayLightRefs.current[i] = el; }} position={[0, 4.4, 0]} angle={0.38} penumbra={0.5} intensity={night ? 0.9 : 0.22} color={tone.main} distance={18} />
+            </group>
+          ))}
+          <Text position={[0, 3.9, 0]} fontSize={0.58} color={tone.glow} anchorX="center">DÉFILÉ PREMIUM</Text>
+        </group>
+      )}
+
+      {showSports && (
+        <group position={[-30, 0.1, -56]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.06, 0]}><ringGeometry args={[8, 13, 32]} /><meshStandardMaterial color="#19354a" roughness={0.65} metalness={0.08} /></mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.09, 0]}><ringGeometry args={[10.1, 12.9, 32]} /><meshStandardMaterial color={tone.main} emissive={tone.main} emissiveIntensity={night ? 0.55 : 0.08} /></mesh>
+          <Text position={[0, 0.7, 0]} fontSize={0.5} color={tone.glow} anchorX="center">PARC SPORTIF</Text>
+          {[-5, 0, 5].map((x, i) => (
+            <mesh key={`sport-beam-${i}`} position={[x, 4.1, 7.2]}><boxGeometry args={[0.14, 7.2, 0.14]} /><meshStandardMaterial color="#dfe8f0" metalness={0.62} roughness={0.12} /></mesh>
+          ))}
+        </group>
+      )}
+
+      {showFireworks && (
+        <group position={[16, 0, -6]}>
+          {[
+            { x: -2, z: 0, c: tone.main },
+            { x: 2, z: -2, c: tone.glow },
+            { x: 6, z: 1, c: tone.accent },
+            { x: 10, z: -1, c: tone.ground },
+          ].map((firework, index) => (
+            <group key={`firework-${index}`} ref={(el) => { fireworkRefs.current[index] = el; }} position={[firework.x, 18 + index * 2.2, firework.z]}>
+              {Array.from({ length: 8 }).map((_, ray) => {
+                const angle = (ray / 8) * Math.PI * 2;
+                return <mesh key={`firework-ray-${ray}`} position={[Math.cos(angle) * 1.6, 0, Math.sin(angle) * 1.6]}><boxGeometry args={[0.08, 2.7, 0.08]} /><meshStandardMaterial color={firework.c} emissive={firework.c} emissiveIntensity={night ? 2.2 : 0.28} transparent opacity={0.92} /></mesh>;
+              })}
+              <mesh><sphereGeometry args={[0.22, 10, 10]} /><meshStandardMaterial color={firework.c} emissive={firework.c} emissiveIntensity={night ? 3.2 : 0.38} /></mesh>
+            </group>
+          ))}
+          <Text position={[2, 24.5, 0]} fontSize={0.72} color={tone.glow} anchorX="center">FEUX D'ARTIFICE</Text>
+        </group>
+      )}
+
+      {(season === 'winter' || premiumMode) && (
+        <group position={[22, 0, 26]}>
+          <mesh position={[0, 0.6, 0]}><coneGeometry args={[1.0, 2.4, 8]} /><meshStandardMaterial color="#17314a" emissive="#17314a" emissiveIntensity={0.12} /></mesh>
+          <mesh position={[0, 1.85, 0]}><sphereGeometry args={[0.18, 8, 8]} /><meshStandardMaterial color="#fffaf0" emissive="#fffaf0" emissiveIntensity={1.6} /></mesh>
+          <Text position={[0, 3.1, 0]} fontSize={0.38} color="#fffaf0" anchorX="center">FIN D'ANNÉE</Text>
+        </group>
+      )}
+
+      {(season === 'spring' || premiumMode) && (
+        <group position={[-8, 0, -10]}>
+          {[-3.5, -1.2, 1.2, 3.5].map((x, i) => (
+            <mesh key={`spring-bloom-${i}`} position={[x, 0.7, 0]}><sphereGeometry args={[0.26, 8, 8]} /><meshStandardMaterial color={i % 2 === 0 ? '#ff9ecb' : '#8ef0a7'} emissive={i % 2 === 0 ? '#ff9ecb' : '#8ef0a7'} emissiveIntensity={0.28} /></mesh>
+          ))}
+        </group>
+      )}
+
+      {(season === 'national' || premiumMode) && (
+        <group position={[0, 0, -20]}>
+          {[-6, -2, 2, 6].map((x, i) => (
+            <mesh key={`flag-${i}`} position={[x, 1.4, 0]}><boxGeometry args={[0.08, 2.8, 1.2]} /><meshStandardMaterial color={i % 2 === 0 ? tone.main : tone.main === '#ff4b5c' ? tone.accent : '#ff4b5c'} emissive={tone.main} emissiveIntensity={0.22} /></mesh>
+          ))}
+        </group>
+      )}
+    </group>
+  );
+}
   const gulls = useMemo(() => [...Array(18)].map(() => ({
     cx: (Math.random() - 0.5) * 80, cy: 5 + Math.random() * 15, cz: (Math.random() - 0.5) * 60,
     sp: 0.2 + Math.random() * 0.6, r: 10 + Math.random() * 25, ws: 5 + Math.random() * 5,
@@ -1916,9 +2805,23 @@ function CoastalStation({ tod }) {
   useFrame(({ clock }) => {
     if (!trainRef.current) return;
     const t = clock.getElapsedTime();
+    const manualTrain = window.__coastalTrainManual && window.__coastalTrainManualState;
     let x = -70 + (t * 4) % 100;
-    trainRef.current.position.x = x;
-    window.__coastalTrainPos = { x: 45 + x, y: -1.35, z: -36.25 };
+    let rotationY = 0;
+
+    if (manualTrain) {
+      const state = manualTrain;
+      const worldPos = state.pos || { x: 45 + x, y: -1.35, z: -36.25 };
+      x = worldPos.x - 45;
+      rotationY = typeof state.yaw === 'number' ? state.yaw : 0;
+      trainRef.current.position.x = x;
+      trainRef.current.rotation.y = rotationY;
+      window.__coastalTrainPos = { x: worldPos.x, y: typeof worldPos.y === 'number' ? worldPos.y : -1.35, z: typeof worldPos.z === 'number' ? worldPos.z : -36.25 };
+    } else {
+      trainRef.current.position.x = x;
+      trainRef.current.rotation.y = 0;
+      window.__coastalTrainPos = { x: 45 + x, y: -1.35, z: -36.25 };
+    }
     if (passengersRef.current) {
       passengersRef.current.children.forEach((p, i) => {
         if (p.userData.waiting) {
@@ -4899,9 +5802,22 @@ function DockedMegaCruiseYacht({ tod }) {
   useFrame(({ clock }) => {
     if (!ref.current) return;
     const t = clock.getElapsedTime();
-    ref.current.position.y = 0.18 + Math.sin(t * 0.45) * 0.04;
-    ref.current.rotation.z = Math.sin(t * 0.35) * 0.01;
-    window.__superyachtPos = { x: -16, y: ref.current.position.y + 1.2, z: 10.2 };
+    const manualYacht = window.__superyachtManual && window.__superyachtManualState;
+    if (manualYacht) {
+      const state = manualYacht;
+      const pos = state.pos || { x: -16, y: 0.18, z: 10.2 };
+      ref.current.position.set(0, 0.18, 4.2);
+      if (ref.current.parent) {
+        ref.current.parent.position.set(pos.x, typeof pos.y === 'number' ? pos.y : 0.18, pos.z);
+        ref.current.parent.rotation.y = typeof state.yaw === 'number' ? state.yaw : ref.current.parent.rotation.y;
+      }
+      ref.current.rotation.z = Math.sin(t * 0.15) * 0.004;
+      window.__superyachtPos = { x: pos.x, y: typeof pos.y === 'number' ? pos.y + 1.2 : 1.38, z: pos.z };
+    } else {
+      ref.current.position.y = 0.18 + Math.sin(t * 0.45) * 0.04;
+      ref.current.rotation.z = Math.sin(t * 0.35) * 0.01;
+      window.__superyachtPos = { x: -16, y: ref.current.position.y + 1.2, z: 10.2 };
+    }
     if (hatchRef.current) {
       const cycle = t % 24;
       let openness = 1;
@@ -5179,7 +6095,18 @@ function DockedDefenseCarrier({ tod }) {
 
   useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime();
+    const manualCarrier = window.__carrierManual && window.__carrierManualState;
     if (groupRef.current) {
+      if (manualCarrier) {
+        const state = manualCarrier;
+        const pos = state.pos || { x: 55, y: 2.4, z: 52 };
+        carrierPosRef.current.set(pos.x, typeof pos.y === 'number' ? pos.y : 2.4, pos.z);
+        carrierVelRef.current.set(0, 0, 0);
+        carrierYawRef.current = typeof state.yaw === 'number' ? state.yaw : carrierYawRef.current;
+        groupRef.current.position.set(carrierPosRef.current.x, carrierPosRef.current.y, carrierPosRef.current.z);
+        groupRef.current.rotation.y = carrierYawRef.current;
+        window.__carrierPos = { x: carrierPosRef.current.x, y: carrierPosRef.current.y, z: carrierPosRef.current.z };
+      } else {
       const wp = carrierWaypoints[carrierWpRef.current];
       const target = new THREE.Vector3(wp[0], 0, wp[1]);
       const pos = carrierPosRef.current;
@@ -5255,6 +6182,7 @@ function DockedDefenseCarrier({ tod }) {
         groupRef.current.rotation.y = carrierYawRef.current;
       }
       window.__carrierPos = { x: pos.x, y: 2.4, z: pos.z };
+      }
     }
     if (!ref.current) return;
     ref.current.position.y = -1.35 + Math.sin(t * 0.35) * 0.05;
@@ -5990,7 +6918,23 @@ function BackScenery({ tod }) {
   const night = tod < 0.18 || tod > 0.82;
   
   // PREMIUM SKYLINE — 30+ buildings with varied architecture
-  const premiumBuildings = [];
+  const premiumBuildings = useMemo(() => ([
+    { x: -118, z: -176, w: 14, d: 14, h: 44, style: 'glass-tower', crown: true },
+    { x: -104, z: -150, w: 18, d: 16, h: 58, style: 'supertall', spire: true },
+    { x: -88, z: -172, w: 12, d: 12, h: 36, style: 'modern-slim' },
+    { x: -74, z: -146, w: 20, d: 18, h: 62, style: 'glass-tower', crown: true },
+    { x: -58, z: -168, w: 16, d: 14, h: 40, style: 'residential' },
+    { x: -42, z: -154, w: 14, d: 14, h: 34, style: 'art-deco', setbacks: true },
+    { x: -24, z: -170, w: 18, d: 16, h: 46, style: 'office' },
+    { x: -6, z: -150, w: 12, d: 12, h: 32, style: 'concrete', antenna: true },
+    { x: 10, z: -170, w: 22, d: 18, h: 68, style: 'supertall', spire: true },
+    { x: 28, z: -158, w: 16, d: 14, h: 52, style: 'glass-tower', crown: true },
+    { x: 46, z: -172, w: 18, d: 16, h: 44, style: 'modern-slim' },
+    { x: 64, z: -154, w: 20, d: 18, h: 60, style: 'office', setbacks: true },
+    { x: 82, z: -168, w: 14, d: 14, h: 38, style: 'residential' },
+    { x: 100, z: -150, w: 18, d: 16, h: 50, style: 'glass-tower', crown: true },
+    { x: 116, z: -172, w: 16, d: 16, h: 42, style: 'art-deco', antenna: true },
+  ]), []);
 
   // Style configs — realistic muted tones
   const styles = {
@@ -6824,26 +7768,31 @@ function Lighting({ tod }) {
     ref.current.position.set(Math.cos(a) * 25, Math.sin(a) * 18 + 8, 5);
   });
   return <>
-    {/* Lumière ambiante - Plus intense */}
-    <ambientLight intensity={isDay ? 0.75 : isSs ? 0.5 : 0.15} color={isDay ? '#fff8ee' : '#a8d4e6'} />
-    {/* Lumière directionnelle soleil/lune - Plus brillante */}
+    {/* Lumière ambiante - plus douce et plus physique */}
+    <ambientLight intensity={isDay ? 0.42 : isSs ? 0.24 : 0.08} color={isDay ? '#f8f4ee' : '#a9c7de'} />
+    {/* Key light soleil/lune */}
     <directionalLight 
       ref={ref} 
-      intensity={isDay ? 1.8 : isSs ? 1.0 : 0.2} 
-      color={isDay ? '#FFF8E7' : isSs ? '#FF7744' : '#a8c8e6'} 
+      intensity={isDay ? 2.15 : isSs ? 1.2 : 0.28} 
+      color={isDay ? '#fff4db' : isSs ? '#ff8f5f' : '#b8d6f2'} 
       castShadow
     />
-    {/* Lumière hémisphérique - Améliore les ombres */}
+    {/* Fill lumineux ciel / sol */}
     <hemisphereLight 
-      skyColor={isDay ? '#ffe8cc' : '#1a2e4a'} 
-      groundColor={isDay ? '#0099dd' : '#0a1628'} 
-      intensity={isDay ? 0.5 : 0.1} 
+      skyColor={isDay ? '#fce9d0' : '#17304d'} 
+      groundColor={isDay ? '#8ebdd9' : '#091320'} 
+      intensity={isDay ? 0.72 : 0.18} 
     />
-    {/* Lumière de remplissage - Évite les zones trop sombres */}
+    {/* Rim / bounce light pour détacher les volumes */}
     <directionalLight 
-      position={[-15, 10, 15]} 
-      intensity={isDay ? 0.4 : 0.08} 
-      color={isDay ? '#e8f4ff' : '#6688aa'}
+      position={[-15, 14, 15]} 
+      intensity={isDay ? 0.55 : 0.12} 
+      color={isDay ? '#e9f6ff' : '#6f90b6'}
+    />
+    <directionalLight 
+      position={[16, 8, -18]} 
+      intensity={isDay ? 0.18 : 0.28} 
+      color={isDay ? '#ffd4a8' : '#6fd0ff'}
     />
   </>;
 }
@@ -6970,7 +7919,7 @@ function ClickToFly({ controlsRef, cameraRef, autoRotateRef, stopIntroRotation }
   return null;
 }
 
-function FerryCameraController({ controlsRef, cameraRef, autoRotateRef, initialView, defaultView, seaView, birdView, trainCityView, streetView, panoramaView, stopIntroRotation }) {
+function FerryCameraController({ controlsRef, cameraRef, autoRotateRef, initialView, defaultView, seaView, birdView, trainCityView, streetView, panoramaView, hubPlazaView, skywalkView, marketView, cultureView, vipView, stopIntroRotation }) {
   const { camera, invalidate } = useThree();
   const ferryAnimRef = useRef(null);
 
@@ -7023,14 +7972,59 @@ function FerryCameraController({ controlsRef, cameraRef, autoRotateRef, initialV
       invalidate();
     };
 
-    window.resetFerryCamera = () => smoothPreset(defaultView, false);
-    window.setFerrySeaView = () => smoothPreset(seaView, false);
-    window.setFerryBirdView = () => smoothPreset(birdView, false);
-    window.setFerryTrainCityView = () => smoothPreset(trainCityView, false);
-    window.setFerryStreetView = () => smoothPreset(streetView, false);
-    window.setFerryPanoramaView = () => smoothPreset(panoramaView, false);
+    window.resetFerryCamera = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(defaultView, false);
+    };
+    window.setFerrySeaView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(seaView, false);
+    };
+    window.setFerryBirdView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(birdView, false);
+    };
+    window.setFerryTrainCityView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(trainCityView, false);
+    };
+    window.setFerryStreetView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(streetView, false);
+    };
+    window.setFerryPanoramaView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(panoramaView, false);
+    };
+    window.setFerryHubPlazaView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(hubPlazaView, false);
+    };
+    window.setFerrySkywalkView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(skywalkView, false);
+    };
+    window.setFerryMarketView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(marketView, false);
+    };
+    window.setFerryCultureView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(cultureView, false);
+    };
+    window.setFerryVipView = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
+      smoothPreset(vipView, false);
+    };
+    window.setFerryCarrierFollowHigh = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode('high');
+    };
+    window.setFerryCarrierFollowClose = () => {
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode('close');
+    };
     window.stopFerryAutoCameraSequence = () => {
       stopIntroRotation?.();
+      if (window.__setFerryCarrierFollowMode) window.__setFerryCarrierFollowMode(null);
       autoRotateRef.current = false;
       if (controlsRef.current) {
         controlsRef.current.autoRotate = false;
@@ -7050,22 +8044,29 @@ function FerryCameraController({ controlsRef, cameraRef, autoRotateRef, initialV
       delete window.setFerryTrainCityView;
       delete window.setFerryStreetView;
       delete window.setFerryPanoramaView;
+      delete window.setFerryHubPlazaView;
+      delete window.setFerrySkywalkView;
+      delete window.setFerryMarketView;
+      delete window.setFerryCultureView;
+      delete window.setFerryVipView;
+      delete window.setFerryCarrierFollowHigh;
+      delete window.setFerryCarrierFollowClose;
       delete window.stopFerryAutoCameraSequence;
     };
-  }, [camera, controlsRef, cameraRef, autoRotateRef, initialView, defaultView, seaView, birdView, trainCityView, streetView, panoramaView, stopIntroRotation, invalidate]);
+  }, [camera, controlsRef, cameraRef, autoRotateRef, initialView, defaultView, seaView, birdView, trainCityView, streetView, panoramaView, hubPlazaView, skywalkView, marketView, cultureView, vipView, stopIntroRotation, invalidate]);
   return null;
 }
 
 // ─── Full Scene with Mobile Optimization ────────────────────
-function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDisableHeavyEffects, preferFastDesktop, sceneHoldPaused, isTouchDevice, threeDSettings }) {
+function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDisableHeavyEffects, preferFastDesktop, sceneHoldPaused, isTouchDevice, threeDSettings, hubScenario, hubSeason, playMode }) {
   const todRef = useRef(0.5);
-  const [, forceUpdate] = useState(0);
   const controlsRef = useRef();
   const cameraRef = useRef();
   const autoRotateRef = useRef(false);
   
-  // Séquence caméra automatique au démarrage
-  const [introRotationActive, setIntroRotationActive] = useState(false);
+  // Séquence caméra automatique au démarrage ; elle reste active par défaut
+  // pour la découverte du hub, et ne s’arrête qu’à l’interaction utilisateur.
+  const [introRotationActive, setIntroRotationActive] = useState(true);
   const introPhaseRef = useRef('orbitAroundFerry');
   const introProgressRef = useRef(0);
   const introPhaseStartRef = useRef(null);
@@ -7077,6 +8078,11 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
   const trainCityView = useMemo(() => ({ position: [isMobile ? -112 : -124, isMobile ? 31 : 38, isMobile ? -28 : -16], target: [isMobile ? -18 : -18, isMobile ? 7.6 : 8.8, isMobile ? -168 : -170], fov: isMobile ? 80 : 74 }), [isMobile]);
   const streetView = useMemo(() => ({ position: [isMobile ? 9.5 : 8.4, isMobile ? 2.8 : 2.2, isMobile ? 14 : 12.5], target: [7.8, 1.2, -0.6], fov: isMobile ? 70 : 64 }), [isMobile]);
   const panoramaView = useMemo(() => ({ position: [isMobile ? 24 : 22, isMobile ? 21 : 18.5, isMobile ? 56 : 51], target: [20, 2, 18], fov: isMobile ? 106 : 98 }), [isMobile]);
+  const hubPlazaView = useMemo(() => ({ position: [18, 8.2, -4], target: [16, 1.2, -28], fov: isMobile ? 72 : 64 }), [isMobile]);
+  const skywalkView = useMemo(() => ({ position: [-34, 10, -30], target: [-18, 1.5, -42], fov: isMobile ? 70 : 62 }), [isMobile]);
+  const marketView = useMemo(() => ({ position: [-26, 9, 158], target: [-16, 1.5, 146], fov: isMobile ? 68 : 60 }), [isMobile]);
+  const cultureView = useMemo(() => ({ position: [-34, 11, 178], target: [-54, 3, 170], fov: isMobile ? 70 : 62 }), [isMobile]);
+  const vipView = useMemo(() => ({ position: [44, 8.5, -2], target: [42, 1.2, -18], fov: isMobile ? 68 : 60 }), [isMobile]);
 
   const compactScene = isMobile ? true : (isTablet && (isLowPower || shouldDisableHeavyEffects));
   const seaQualityBoost = !isMobile && !isTablet && !isLowPower && !shouldDisableHeavyEffects;
@@ -7086,6 +8092,32 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
     introProgressRef.current = 0;
     setIntroRotationActive(false);
   }, []);
+
+  useEffect(() => {
+    if (playMode) stopIntroRotation();
+  }, [playMode, stopIntroRotation]);
+  const carrierFollowModeRef = useRef(null);
+
+  const setCarrierFollowMode = React.useCallback((mode) => {
+    carrierFollowModeRef.current = mode || null;
+    if (mode) {
+      stopIntroRotation();
+      if (controlsRef.current) {
+        controlsRef.current.autoRotate = false;
+      }
+      if (window) window.__ferryCarrierFollowMode = mode;
+      return;
+    }
+    if (window) delete window.__ferryCarrierFollowMode;
+  }, [stopIntroRotation]);
+
+  useEffect(() => {
+    window.__setFerryCarrierFollowMode = setCarrierFollowMode;
+    return () => {
+      delete window.__setFerryCarrierFollowMode;
+      delete window.__ferryCarrierFollowMode;
+    };
+  }, [setCarrierFollowMode]);
 
   // Centres d'orbite pour chaque élément
   const jetSkiAreaCenter = useMemo(() => [-70, 2, -28], []);
@@ -7097,10 +8129,10 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
   const cityCenter = useMemo(() => (isMobile ? [-18, 8.8, -162] : [-18, 9.6, -166]), [isMobile]);
 
   useEffect(() => {
-    introPhaseRef.current = 'complete';
+    introPhaseRef.current = 'approach';
     introProgressRef.current = 0;
     introPhaseStartRef.current = initialView;
-    setIntroRotationActive(false);
+    setIntroRotationActive(true);
     autoRotateRef.current = false;
   }, [initialView]);
 
@@ -7446,7 +8478,6 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
     return ordered;
   }, [getCarrierPos, isMobile, isTablet, isLowPower, threeDSettings]);
 
-  const lastUpdateRef = useRef(0);
   useFrame(({ clock }, delta) => {
     const t = clock.getElapsedTime();
     todRef.current = ((t / DAY) + 0.45) % 1;
@@ -7478,6 +8509,28 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
       fov: cameraRef.current.fov,
       _carrierSnap: null, _seaSnapCenter: null,
     });
+
+    if (carrierFollowModeRef.current && controlsRef.current && cameraRef.current) {
+      const cp = getCarrierPos();
+      const cfg = carrierFollowModeRef.current === 'close'
+        ? { pos: [cp.x + 0, cp.y + 8, cp.z + 18], target: [cp.x, cp.y + 2.2, cp.z], fov: 62 }
+        : { pos: [cp.x + 0, cp.y + 26, cp.z + 42], target: [cp.x, cp.y + 2.2, cp.z], fov: 76 };
+
+      cameraRef.current.position.x += (cfg.pos[0] - cameraRef.current.position.x) * 0.08;
+      cameraRef.current.position.y += (cfg.pos[1] - cameraRef.current.position.y) * 0.08;
+      cameraRef.current.position.z += (cfg.pos[2] - cameraRef.current.position.z) * 0.08;
+
+      controlsRef.current.target.x += (cfg.target[0] - controlsRef.current.target.x) * 0.08;
+      controlsRef.current.target.y += (cfg.target[1] - controlsRef.current.target.y) * 0.08;
+      controlsRef.current.target.z += (cfg.target[2] - controlsRef.current.target.z) * 0.08;
+
+      const targetFov = cfg.fov;
+      cameraRef.current.fov += (targetFov - cameraRef.current.fov) * 0.08;
+      cameraRef.current.updateProjectionMatrix();
+      controlsRef.current.autoRotate = false;
+      controlsRef.current.update();
+      return;
+    }
 
     if (sceneHoldPaused) {
       if (controlsRef.current) { controlsRef.current.autoRotate = false; controlsRef.current.update(); }
@@ -7631,17 +8684,14 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
       ctrl.update();
     }
     
-    if (t - lastUpdateRef.current > 12) {
-      lastUpdateRef.current = t;
-      forceUpdate(n => n + 1);
-    }
   });
   const tod = todRef.current;
   const night = tod < 0.18 || tod > 0.82;
 
   return <>
-    <FerryCameraController controlsRef={controlsRef} cameraRef={cameraRef} autoRotateRef={autoRotateRef} initialView={initialView} defaultView={defaultView} seaView={seaView} birdView={birdView} trainCityView={trainCityView} streetView={streetView} panoramaView={panoramaView} stopIntroRotation={stopIntroRotation} />
+    <FerryCameraController controlsRef={controlsRef} cameraRef={cameraRef} autoRotateRef={autoRotateRef} initialView={initialView} defaultView={defaultView} seaView={seaView} birdView={birdView} trainCityView={trainCityView} streetView={streetView} panoramaView={panoramaView} hubPlazaView={hubPlazaView} skywalkView={skywalkView} marketView={marketView} cultureView={cultureView} vipView={vipView} stopIntroRotation={stopIntroRotation} />
     <ClickToFly controlsRef={controlsRef} cameraRef={cameraRef} autoRotateRef={autoRotateRef} stopIntroRotation={stopIntroRotation} />
+    <HubGameplayLayer tod={tod} isTouchDevice={isTouchDevice} controlsRef={controlsRef} cameraRef={cameraRef} active={playMode} />
     <Sky tod={tod} />
     <Lighting tod={tod} />
     <FerryQualityPolish tod={tod} qualityTier={qualityTier} />
@@ -7670,10 +8720,13 @@ function Scene({ isMobile, isTablet, isLowPower, shouldReduceParticles, shouldDi
     <FlyingHeliFromYacht />
     <DockedDefenseCarrier tod={tod} />
     <SeaWalls tod={tod} />
+    <HubWorldExpansion tod={tod} />
+    <HubEventScenery tod={tod} scenario={hubScenario} season={hubSeason} />
     <BackScenery tod={tod} />
     <TropicalIsland tod={tod} />
     {night && <Stars radius={3200} depth={1500} count={qualityTier === 'desktop' ? 3000 : qualityTier === 'tablet' ? 1900 : 1200} factor={4.6} fade speed={1} />}
-    <fog attach="fog" args={[night ? '#0a1628' : '#87CEEB', qualityTier === 'mobile' ? 900 : qualityTier === 'tablet' ? 1300 : 1500, qualityTier === 'mobile' ? 3200 : qualityTier === 'tablet' ? 3900 : 4800]} />
+    <color attach="background" args={[night ? '#07111f' : '#8cc7ee']} />
+    <fog attach="fog" args={[night ? '#07111f' : '#8cc7ee', qualityTier === 'mobile' ? 780 : qualityTier === 'tablet' ? 1080 : 1240, qualityTier === 'mobile' ? 2500 : qualityTier === 'tablet' ? 3300 : 3900]} />
     
     <OrbitControls
       ref={controlsRef}
@@ -7707,6 +8760,43 @@ const FerryBackground = memo(() => {
   const { playShipHorn, playSeagull, startOceanAmbient } = soundEffects;
   const [sceneHoldPaused, setSceneHoldPaused] = useState(false);
   const [instantReady, setInstantReady] = useState(false);
+  const [showPremiumSuggestions, setShowPremiumSuggestions] = useState(false);
+  const [premiumIndex, setPremiumIndex] = useState(0);
+  const [carrierFollowMode, setCarrierFollowMode] = useState('high');
+  const [hubScenario, setHubScenario] = useState('premium');
+  const [hubSeason, setHubSeason] = useState('summer');
+  const [playMode, setPlayMode] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const lastTapRef = useRef(0);
+
+  const premiumSuggestions = useMemo(() => [
+    { label: 'Ferry principal', blurb: 'Vue d’ensemble du hub et du quai', action: 'setFerryBirdView' },
+    { label: 'Mer & horizon', blurb: 'Découverte de la côte et du large', action: 'setFerrySeaView' },
+    { label: 'Train City', blurb: 'Suivi du centre-ville et de la gare', action: 'setFerryTrainCityView' },
+    { label: 'Ruelle / rue', blurb: 'Vue proche et immersive du port', action: 'setFerryStreetView' },
+    { label: 'Panorama', blurb: 'Grand angle premium et émerveillement', action: 'setFerryPanoramaView' },
+  ], []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => setShowPremiumSuggestions(true), 50000);
+    return () => window.clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!showPremiumSuggestions) return undefined;
+    const interval = window.setInterval(() => {
+      setPremiumIndex((prev) => (prev + 1) % premiumSuggestions.length);
+    }, 6500);
+    return () => window.clearInterval(interval);
+  }, [showPremiumSuggestions, premiumSuggestions.length]);
+
+  useEffect(() => {
+    if (!showPremiumSuggestions) return;
+    const action = premiumSuggestions[premiumIndex]?.action;
+    if (action && window[action]) {
+      window[action]();
+    }
+  }, [premiumIndex, premiumSuggestions, showPremiumSuggestions]);
 
   const canvasShadows = !isMobile && !isLowPower && !shouldDisableHeavyEffects;
   const detectedDpr = threeDSettings?.dpr || 1.35;
@@ -7733,15 +8823,81 @@ const FerryBackground = memo(() => {
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    const syncFullscreen = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', syncFullscreen);
+    syncFullscreen();
+    return () => document.removeEventListener('fullscreenchange', syncFullscreen);
+  }, []);
+
+  const applyCarrierFollow = (mode) => {
+    setCarrierFollowMode(mode);
+    if (mode === 'high' && window.setFerryCarrierFollowHigh) {
+      window.setFerryCarrierFollowHigh();
+    } else if (mode === 'close' && window.setFerryCarrierFollowClose) {
+      window.setFerryCarrierFollowClose();
+    } else if (window.stopFerryAutoCameraSequence) {
+      window.stopFerryAutoCameraSequence();
+    }
+  };
+
+  const toggleFullscreen = async () => {
+    if (!document.fullscreenElement) {
+      await document.documentElement.requestFullscreen?.();
+    } else {
+      await document.exitFullscreen?.();
+    }
+  };
+
+  const scenarioOptions = [
+    { id: 'premium', label: 'Premium' },
+    { id: 'festival', label: 'Lumières' },
+    { id: 'concert', label: 'Concert' },
+    { id: 'market', label: 'Marché' },
+    { id: 'fashion', label: 'Défilé' },
+    { id: 'sports', label: 'Sport' },
+    { id: 'fireworks', label: 'Feux' },
+    { id: 'parade', label: 'Parade' },
+  ];
+
+  const seasonOptions = [
+    { id: 'summer', label: 'Été' },
+    { id: 'spring', label: 'Printemps' },
+    { id: 'winter', label: 'Noël' },
+    { id: 'national', label: 'National' },
+  ];
+
+  const poiOptions = [
+    { id: 'hub', label: 'Hub central', action: 'setFerryHubPlazaView' },
+    { id: 'skywalk', label: 'Skywalk', action: 'setFerrySkywalkView' },
+    { id: 'market', label: 'Marché', action: 'setFerryMarketView' },
+    { id: 'culture', label: 'Culture', action: 'setFerryCultureView' },
+    { id: 'vip', label: 'VIP', action: 'setFerryVipView' },
+    { id: 'carrier', label: 'Carrier', action: 'setFerryCarrierFollowHigh' },
+  ];
+
   return (
     <>
       <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }}>
         <div
           style={{ pointerEvents: 'auto', width: '100%', height: '100%', touchAction: 'none' }}
 
-          onPointerDown={() => {
+          onPointerDown={(event) => {
             setSceneHoldPaused(true);
             if (window.stopFerryAutoCameraSequence) window.stopFerryAutoCameraSequence();
+
+            const now = Date.now();
+            const isDoubleTap = event.pointerType === 'touch' && (now - lastTapRef.current) < 320;
+            lastTapRef.current = now;
+
+            if (isDoubleTap) {
+              const nextIndex = (premiumIndex + 1) % premiumSuggestions.length;
+              setPremiumIndex(nextIndex);
+              const nextAction = premiumSuggestions[nextIndex]?.action;
+              if (nextAction && window[nextAction]) {
+                window[nextAction]();
+              }
+            }
           }}
           onPointerUp={() => setSceneHoldPaused(false)}
           onPointerCancel={() => setSceneHoldPaused(false)}
@@ -7764,16 +8920,122 @@ const FerryBackground = memo(() => {
             performance={{ min: instantReady ? (isMobile ? 0.8 : 0.9) : 0.72, debounce: instantReady ? 140 : 80 }}
             onCreated={({ gl }) => {
               gl.toneMapping = THREE.ACESFilmicToneMapping;
-              gl.toneMappingExposure = 1.08;
+              gl.toneMappingExposure = 1.16;
               gl.outputColorSpace = THREE.SRGBColorSpace;
+              gl.physicallyCorrectLights = true;
               gl.shadowMap.enabled = canvasShadows;
               if (canvasShadows) {
                 gl.shadowMap.type = THREE.PCFSoftShadowMap;
               }
             }}
           >
-            <Scene isMobile={isMobile} isTablet={isTablet} isLowPower={isLowPower} shouldReduceParticles={shouldReduceParticles} shouldDisableHeavyEffects={shouldDisableHeavyEffects} preferFastDesktop={preferFastDesktop} sceneHoldPaused={sceneHoldPaused} isTouchDevice={isTouchDevice} threeDSettings={threeDSettings} />
+            <Scene isMobile={isMobile} isTablet={isTablet} isLowPower={isLowPower} shouldReduceParticles={shouldReduceParticles} shouldDisableHeavyEffects={shouldDisableHeavyEffects} preferFastDesktop={preferFastDesktop} sceneHoldPaused={sceneHoldPaused} isTouchDevice={isTouchDevice} threeDSettings={threeDSettings} hubScenario={hubScenario} hubSeason={hubSeason} playMode={playMode} />
           </Canvas>
+        </div>
+
+        <div className="pointer-events-none absolute inset-0 z-[1]" aria-hidden="true">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,255,255,0.06),transparent_42%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(2,6,23,0.05)_0%,rgba(2,6,23,0.12)_72%,rgba(2,6,23,0.35)_100%)]" />
+          <div className="absolute inset-0 opacity-[0.12] mix-blend-soft-light" style={{ backgroundImage: 'radial-gradient(rgba(255,255,255,0.9) 0.7px, transparent 0.7px)', backgroundSize: '4px 4px' }} />
+          <div className="absolute inset-0 shadow-[inset_0_0_120px_rgba(0,0,0,0.26)]" />
+        </div>
+
+        <div className="pointer-events-auto absolute left-4 top-4 z-10 max-w-[19rem] rounded-2xl border border-cyan-300/25 bg-slate-950/65 p-3 shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 18px 44px rgba(8, 145, 178, 0.18)' }}>
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Scénarisation du hub</div>
+          <div className="mb-2 flex flex-wrap gap-2">
+            {scenarioOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setHubScenario(option.id)}
+                className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+                  hubScenario === option.id
+                    ? 'border-cyan-300 bg-cyan-400/20 text-cyan-50'
+                    : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Décor saisonnier</div>
+          <div className="flex flex-wrap gap-2">
+            {seasonOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setHubSeason(option.id)}
+                className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+                  hubSeason === option.id
+                    ? 'border-cyan-300 bg-cyan-400/20 text-cyan-50'
+                    : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="pointer-events-auto absolute left-4 top-[17.75rem] z-10 max-w-[19rem] rounded-2xl border border-white/15 bg-slate-950/58 p-3 shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 18px 44px rgba(15, 23, 42, 0.28)' }}>
+          <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Points d'intérêt</div>
+          <div className="grid grid-cols-2 gap-2">
+            {poiOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => {
+                  const action = window[option.action];
+                  if (action) action();
+                }}
+                className="rounded-xl border border-white/15 bg-white/5 px-2.5 py-2 text-left text-[10px] font-medium text-slate-100 transition hover:border-cyan-200/50 hover:bg-cyan-500/10"
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 text-[10px] leading-4 text-slate-300/80">Clique pour déplacer la caméra sur une zone du hub ou sur le porte-avions.</div>
+        </div>
+
+        <div className="pointer-events-auto absolute bottom-4 right-4 z-10 max-w-[20rem] rounded-2xl border border-cyan-300/25 bg-slate-950/70 p-3 shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 18px 44px rgba(8, 145, 178, 0.22)' }}>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Gameplay</span>
+            <span className="text-[10px] text-slate-300">{playMode ? 'Actif' : 'Observation'}</span>
+          </div>
+          <div className="mb-2 flex gap-2">
+            <button
+              type="button"
+              onClick={() => setPlayMode((value) => !value)}
+              className={`rounded-full border px-3 py-1.5 text-[10px] font-medium transition ${
+                playMode
+                  ? 'border-cyan-300 bg-cyan-400/20 text-cyan-50'
+                  : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+              }`}
+            >
+              {playMode ? 'Passer en caméra libre' : 'Passer en mode joueur'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { void toggleFullscreen(); }}
+              className={`rounded-full border px-3 py-1.5 text-[10px] font-medium transition ${
+                isFullscreen
+                  ? 'border-emerald-300 bg-emerald-400/20 text-emerald-50'
+                  : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+              }`}
+            >
+              {isFullscreen ? 'Quitter le plein écran' : 'Plein écran'}
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-200/90">
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">WASD / stick : déplacer</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">E / X : entrer-sortir</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">Space / A : saut</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">Drag souris : orientation</div>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[10px] text-slate-200/90">
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">Shift / RB : sprint</div>
+            <div className="rounded-xl border border-white/10 bg-white/5 px-2.5 py-2">Plein écran: visible</div>
+          </div>
         </div>
         
         {/* Audio Controls for Ferry */}
@@ -7785,6 +9047,75 @@ const FerryBackground = memo(() => {
           />
         </div>
       </div>
+
+      <div className="pointer-events-auto absolute bottom-4 left-4 z-10 rounded-2xl border border-cyan-300/25 bg-slate-950/60 px-3 py-2 shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 18px 44px rgba(8, 145, 178, 0.22)' }}>
+        <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-cyan-200/80">Suivi porte-avions</div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => applyCarrierFollow('high')}
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+              carrierFollowMode === 'high'
+                ? 'border-cyan-300 bg-cyan-400/20 text-cyan-50'
+                : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+            }`}
+          >
+            Haut
+          </button>
+          <button
+            type="button"
+            onClick={() => applyCarrierFollow('close')}
+            className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+              carrierFollowMode === 'close'
+                ? 'border-cyan-300 bg-cyan-400/20 text-cyan-50'
+                : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+            }`}
+          >
+            Proche
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setCarrierFollowMode('');
+              if (window.stopFerryAutoCameraSequence) window.stopFerryAutoCameraSequence();
+            }}
+            className="rounded-full border border-white/15 bg-white/5 px-2.5 py-1 text-[10px] font-medium text-slate-200 transition hover:border-cyan-200/50 hover:bg-cyan-500/10"
+          >
+            Normal
+          </button>
+        </div>
+      </div>
+
+      {showPremiumSuggestions && (
+        <div className="pointer-events-auto absolute right-4 top-4 z-10 max-w-xs rounded-2xl border border-white/20 bg-slate-950/55 p-3 shadow-2xl backdrop-blur-md" style={{ boxShadow: '0 20px 55px rgba(15, 23, 42, 0.5)' }}>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-cyan-200/80">Premium</span>
+            <span className="text-[10px] text-slate-300">{premiumSuggestions[premiumIndex]?.label}</span>
+          </div>
+          <div className="text-sm font-medium text-white">{premiumSuggestions[premiumIndex]?.blurb}</div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {premiumSuggestions.map((suggestion, index) => (
+              <button
+                key={suggestion.label}
+                type="button"
+                onClick={() => {
+                  setPremiumIndex(index);
+                  if (suggestion.action && window[suggestion.action]) {
+                    window[suggestion.action]();
+                  }
+                }}
+                className={`rounded-full border px-2.5 py-1 text-[10px] font-medium transition ${
+                  premiumIndex === index
+                    ? 'border-cyan-300 bg-cyan-400/20 text-cyan-100'
+                    : 'border-white/15 bg-white/5 text-slate-200 hover:border-cyan-200/50 hover:bg-cyan-500/10'
+                }`}
+              >
+                {suggestion.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       
       {/* Camera buttons are created in pure DOM via FerryCameraButtons */}
       <FerryCameraButtons />

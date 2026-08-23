@@ -9,6 +9,8 @@ const isRefusedContext = () => {
   if (
     host.startsWith("id-preview--") ||
     host.startsWith("preview--") ||
+    host.endsWith(".preview.emergentagent.com") ||
+    host.endsWith(".preview.emergentcf.cloud") ||
     host === "lovableproject.com" ||
     host.endsWith(".lovableproject.com") ||
     host === "lovableproject-dev.com" ||

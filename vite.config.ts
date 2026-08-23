@@ -16,6 +16,11 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
+  preview: {
+    host: "0.0.0.0",
+    port: 3000,
+    allowedHosts: ["complete-site-build-1.cluster-5.preview.emergentcf.cloud", ".preview.emergentcf.cloud"],
+  },
   plugins: [
     react(),
     shopSeoPlugin(),

@@ -12,8 +12,21 @@ if [[ -f "$SYNC_TARGET_FILE" ]]; then
 fi
 
 SYNC_REMOTE_NAME="${LOVABLE_SYNC_REMOTE_NAME:-lovable-sync}"
-SYNC_REMOTE_URL="${LOVABLE_SYNC_REMOTE_URL:-$(git -C "$ROOT_DIR" remote get-url origin)}"
-BRANCH="${1:-${LOVABLE_SYNC_BRANCH:-fix-right-anchor-lovable}}"
+if [[ -n "${LOVABLE_SYNC_REMOTE_URL:-}" ]]; then
+  SYNC_REMOTE_URL="$LOVABLE_SYNC_REMOTE_URL"
+else
+  if git -C "$ROOT_DIR" remote get-url "$SYNC_REMOTE_NAME" >/dev/null 2>&1; then
+    SYNC_REMOTE_URL="$(git -C "$ROOT_DIR" remote get-url "$SYNC_REMOTE_NAME")"
+  elif git -C "$ROOT_DIR" remote get-url origin >/dev/null 2>&1; then
+    SYNC_REMOTE_URL="$(git -C "$ROOT_DIR" remote get-url origin)"
+  else
+    echo "Unable to resolve remote URL. Set LOVABLE_SYNC_REMOTE_URL or configure remote '$SYNC_REMOTE_NAME'." >&2
+    exit 1
+  fi
+fi
+
+CURRENT_BRANCH="$(git -C "$ROOT_DIR" branch --show-current 2>/dev/null || true)"
+BRANCH="${1:-${LOVABLE_SYNC_BRANCH:-${CURRENT_BRANCH:-main}}}"
 THEME_ID="mint-vibrant-cyber"
 
 FILES=(
@@ -35,7 +48,11 @@ if ! git rev-parse --verify "$BRANCH" >/dev/null 2>&1; then
   git fetch "$SYNC_REMOTE_NAME" "$BRANCH":"$BRANCH"
 fi
 
-git checkout "$BRANCH"
+if git show-ref --verify --quiet "refs/remotes/$SYNC_REMOTE_NAME/$BRANCH"; then
+  git fetch "$SYNC_REMOTE_NAME" "$BRANCH"
+fi
+
+git switch "$BRANCH"
 
 git_status_changed=false
 

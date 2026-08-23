@@ -19,7 +19,7 @@ createRoot(document.getElementById("root")!).render(
 
 // Ensure old service workers and caches are unregistered to avoid stale preview assets.
 const LOVANET_RELOAD_FLAG = "lovanet_sw_unregistered";
-const LOVANET_RELOAD_VERSION = "4"; // bump to force a new cleanup cycle and full PWA reinstall
+const LOVANET_RELOAD_VERSION = "5"; // bump to force a new cleanup cycle and full PWA reinstall
 
 const forceLovanetReload = () => {
   if (typeof window === "undefined") return;
@@ -70,6 +70,8 @@ if (typeof window !== "undefined") {
     window.self !== window.top ||
     swHost.startsWith("id-preview--") ||
     swHost.startsWith("preview--") ||
+    swHost.endsWith(".preview.emergentagent.com") ||
+    swHost.endsWith(".preview.emergentcf.cloud") ||
     swHost.endsWith("lovableproject.com") ||
     swHost.endsWith("lovableproject-dev.com") ||
     swHost === "localhost";

@@ -130,7 +130,7 @@ export function FerryTrainCityPlaza({
 
       {/* Grand nouveau sol Ferry — très bas sous la ville */}
       <RoundedBox args={[322, 1.82, 236]} radius={0.8} smoothness={6} position={[0, -2.4, territoryCenterZ]}>
-        <meshPhysicalMaterial color={territoryGroundColor} roughness={0.12} metalness={0.08} clearcoat={0.5} clearcoatRoughness={0.1} />
+        <meshPhysicalMaterial color={territoryGroundColor} roughness={0.22} metalness={0.06} clearcoat={0.42} clearcoatRoughness={0.22} />
       </RoundedBox>
       {/* Fine couche supprimée — le Ground du TrainStation gère les surfaces */}
 
@@ -169,7 +169,7 @@ export function FerryTrainCityPlaza({
       </mesh>
       <mesh position={[0, 0.16, territoryCenterZ + 117]}>
         <boxGeometry args={[326, 1.36, 6]} />
-        <meshStandardMaterial color={concreteColor} roughness={0.82} metalness={0.04} />
+        <meshPhysicalMaterial color={concreteColor} roughness={0.42} metalness={0.06} clearcoat={0.14} clearcoatRoughness={0.46} />
       </mesh>
 
       {/* Murailles de pierre et béton à gauche et à droite du sol */}
@@ -177,7 +177,7 @@ export function FerryTrainCityPlaza({
         <group key={`ferry-train-side-wall-${wallIndex}`} position={[x, 0, territoryCenterZ]}>
           <mesh position={[0, -0.18, 0]}>
             <boxGeometry args={[10, 0.96, 236]} />
-            <meshStandardMaterial color={concreteColor} roughness={0.84} metalness={0.04} />
+            <meshPhysicalMaterial color={concreteColor} roughness={0.46} metalness={0.06} clearcoat={0.18} clearcoatRoughness={0.52} />
           </mesh>
           {[-98, -58, -18, 22, 62, 102].map((z, stoneIndex) => (
             <mesh key={`wall-stone-${stoneIndex}`} position={[wallIndex === 0 ? 0.35 : -0.35, 0.38, z]} rotation={[0.08 * stoneIndex, 0.12 * stoneIndex, 0]}>
@@ -187,7 +187,7 @@ export function FerryTrainCityPlaza({
           ))}
           <mesh position={[0, 0.64, 0]}>
             <boxGeometry args={[9.2, 0.24, 236]} />
-            <meshStandardMaterial color="#f4f7fb" roughness={0.34} metalness={0.08} />
+            <meshPhysicalMaterial color="#f4f7fb" roughness={0.14} metalness={0.12} clearcoat={0.28} clearcoatRoughness={0.18} />
           </mesh>
         </group>
       ))}
@@ -209,7 +209,7 @@ export function FerryTrainCityPlaza({
       {/* Sol de base continent — couleur identique au sol TrainStation pour masquer les gaps */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.85, territoryCenterZ]}>
         <planeGeometry args={[308, 222]} />
-        <meshStandardMaterial color={territoryGroundSoft} roughness={0.32} metalness={0.04} />
+        <meshPhysicalMaterial color={territoryGroundSoft} roughness={0.42} metalness={0.03} clearcoat={0.16} clearcoatRoughness={0.56} />
       </mesh>
 
       {/* Paysage périphérique — espaces verts et sols variés au-delà de la ville */}
@@ -699,8 +699,8 @@ function PerimeterLoopTraffic({ night, centerZ, halfW, halfH }) {
                   <meshStandardMaterial color="#111111" roughness={0.95} />
                 </mesh>
               ))}
-              <mesh position={[0, 0.42, 0]} rotation={[0, 0, Math.PI / 14]}><boxGeometry args={[1.02, 0.08, 0.08]} /><meshStandardMaterial color={vehicle.color} metalness={0.62} roughness={0.2} /></mesh>
-              <mesh position={[0.08, 0.52, 0]}><boxGeometry args={[0.42, 0.14, 0.22]} /><meshStandardMaterial color={vehicle.color} metalness={0.62} roughness={0.2} /></mesh>
+              <mesh position={[0, 0.42, 0]} rotation={[0, 0, Math.PI / 14]}><boxGeometry args={[1.02, 0.08, 0.08]} /><meshPhysicalMaterial color={vehicle.color} metalness={0.74} roughness={0.12} clearcoat={0.54} clearcoatRoughness={0.16} /></mesh>
+              <mesh position={[0.08, 0.52, 0]}><boxGeometry args={[0.42, 0.14, 0.22]} /><meshPhysicalMaterial color={vehicle.color} metalness={0.74} roughness={0.12} clearcoat={0.54} clearcoatRoughness={0.16} /></mesh>
               <mesh position={[-0.05, 0.78, 0]}><boxGeometry args={[0.12, 0.36, 0.12]} /><meshStandardMaterial color="#1d2330" roughness={0.75} /></mesh>
               <mesh position={[0.42, 0.7, 0]} rotation={[0, 0, Math.PI / 6]}><boxGeometry args={[0.34, 0.05, 0.05]} /><meshStandardMaterial color="#cfd8df" metalness={0.86} roughness={0.12} /></mesh>
               <mesh position={[0.58, 0.46, 0]}><sphereGeometry args={[0.06, 8, 8]} /><meshStandardMaterial color="#ffe08a" emissive="#ffe08a" emissiveIntensity={night ? 2.4 : 0.22} /></mesh>
@@ -709,15 +709,15 @@ function PerimeterLoopTraffic({ night, centerZ, halfW, halfH }) {
             <>
               <mesh position={[0, vehicle.height * 0.42, 0]}>
                 <boxGeometry args={[vehicle.width, vehicle.height * 0.74, vehicle.depth]} />
-                <meshStandardMaterial color={vehicle.color} metalness={0.56} roughness={0.24} />
+                <meshPhysicalMaterial color={vehicle.color} metalness={0.68} roughness={0.14} clearcoat={0.62} clearcoatRoughness={0.16} />
               </mesh>
               <mesh position={[-vehicle.width * 0.12, vehicle.height * 0.8, 0]}>
                 <boxGeometry args={[vehicle.width * (vehicle.kind === 'truck' || vehicle.kind === 'heavy' ? 0.48 : 0.58), vehicle.height * 0.5, vehicle.depth * 0.88]} />
-                <meshStandardMaterial color={vehicle.color} metalness={0.52} roughness={0.26} />
+                <meshPhysicalMaterial color={vehicle.color} metalness={0.64} roughness={0.16} clearcoat={0.54} clearcoatRoughness={0.18} />
               </mesh>
               <mesh position={[vehicle.width * 0.08, vehicle.height * 0.86, 0]}>
                 <boxGeometry args={[Math.max(vehicle.cabinWidth, vehicle.width * 0.38), vehicle.height * 0.54, vehicle.depth * 0.84]} />
-                <meshPhysicalMaterial color={night ? '#8ec5ff' : '#cae5f4'} transparent opacity={0.58} roughness={0.04} metalness={0.24} />
+                <meshPhysicalMaterial color={night ? '#8ec5ff' : '#cae5f4'} transparent opacity={0.62} roughness={0.02} metalness={0.26} transmission={0.24} clearcoat={1} clearcoatRoughness={0.04} />
               </mesh>
               {(vehicle.kind === 'truck' || vehicle.kind === 'heavy' || vehicle.kind === 'service') && (
                 <mesh position={[-vehicle.width * 0.2, vehicle.height * 0.92, 0]}>
@@ -727,8 +727,8 @@ function PerimeterLoopTraffic({ night, centerZ, halfW, halfH }) {
               )}
               {(vehicle.kind === 'truck' || vehicle.kind === 'heavy') && (
                 <group position={[-vehicle.width * 0.96, vehicle.height * 0.36, 0]}>
-                  <mesh><boxGeometry args={[vehicle.width * 0.72, vehicle.height * 0.26, vehicle.depth * 0.92]} /><meshStandardMaterial color="#4a5058" metalness={0.4} roughness={0.42} /></mesh>
-                  <mesh position={[0, 0.32, 0]}><boxGeometry args={[vehicle.width * 0.64, vehicle.height * 0.34, vehicle.depth * 0.9]} /><meshStandardMaterial color={vehicle.kind === 'heavy' ? '#646b73' : '#dfe6eb'} metalness={0.32} roughness={0.36} /></mesh>
+                  <mesh><boxGeometry args={[vehicle.width * 0.72, vehicle.height * 0.26, vehicle.depth * 0.92]} /><meshPhysicalMaterial color="#4a5058" metalness={0.48} roughness={0.28} clearcoat={0.18} clearcoatRoughness={0.34} /></mesh>
+                  <mesh position={[0, 0.32, 0]}><boxGeometry args={[vehicle.width * 0.64, vehicle.height * 0.34, vehicle.depth * 0.9]} /><meshPhysicalMaterial color={vehicle.kind === 'heavy' ? '#646b73' : '#dfe6eb'} metalness={0.4} roughness={0.24} clearcoat={0.18} clearcoatRoughness={0.3} /></mesh>
                 </group>
               )}
               <mesh position={[vehicle.width / 2 - 0.08, vehicle.height * 0.3, 0]}><boxGeometry args={[0.14, 0.18, vehicle.depth * 0.68]} /><meshStandardMaterial color="#1f2428" metalness={0.62} roughness={0.24} /></mesh>
@@ -918,10 +918,10 @@ function CityCircuitRailway({ night, centerZ }) {
   return (
     <group position={[0, 0, 0]}>
       {/* ═══ AUTOROUTE URBAINE — grand tour complet du Nouveau Monde ═══ */}
-      <mesh position={[0, 0.18, -roadHalfH + centerZ]}><boxGeometry args={[roadHalfW * 2 + 20, 0.24, 12]} /><meshStandardMaterial color={roadColor} roughness={0.92} /></mesh>
-      <mesh position={[0, 0.18, roadHalfH + centerZ]}><boxGeometry args={[roadHalfW * 2 + 20, 0.24, 12]} /><meshStandardMaterial color={roadColor} roughness={0.92} /></mesh>
-      <mesh position={[roadHalfW, 0.18, centerZ]}><boxGeometry args={[12, 0.24, roadHalfH * 2 + 20]} /><meshStandardMaterial color={roadColor} roughness={0.92} /></mesh>
-      <mesh position={[-roadHalfW, 0.18, centerZ]}><boxGeometry args={[12, 0.24, roadHalfH * 2 + 20]} /><meshStandardMaterial color={roadColor} roughness={0.92} /></mesh>
+      <mesh position={[0, 0.18, -roadHalfH + centerZ]}><boxGeometry args={[roadHalfW * 2 + 20, 0.24, 12]} /><meshPhysicalMaterial color={roadColor} roughness={0.76} metalness={0.04} clearcoat={0.08} clearcoatRoughness={0.9} /></mesh>
+      <mesh position={[0, 0.18, roadHalfH + centerZ]}><boxGeometry args={[roadHalfW * 2 + 20, 0.24, 12]} /><meshPhysicalMaterial color={roadColor} roughness={0.76} metalness={0.04} clearcoat={0.08} clearcoatRoughness={0.9} /></mesh>
+      <mesh position={[roadHalfW, 0.18, centerZ]}><boxGeometry args={[12, 0.24, roadHalfH * 2 + 20]} /><meshPhysicalMaterial color={roadColor} roughness={0.76} metalness={0.04} clearcoat={0.08} clearcoatRoughness={0.9} /></mesh>
+      <mesh position={[-roadHalfW, 0.18, centerZ]}><boxGeometry args={[12, 0.24, roadHalfH * 2 + 20]} /><meshPhysicalMaterial color={roadColor} roughness={0.76} metalness={0.04} clearcoat={0.08} clearcoatRoughness={0.9} /></mesh>
 
       {[
         [0, -roadHalfH + 5 + centerZ, roadHalfW * 2 + 14, 2.2],
@@ -943,10 +943,10 @@ function CityCircuitRailway({ night, centerZ }) {
       ))}
 
       {[[-roadHalfW - 7, 0, roadHalfH * 2 + 20], [roadHalfW + 7, 0, roadHalfH * 2 + 20]].map(([x, z, len], i) => (
-        <mesh key={`shoulder-v-${i}`} position={[x, 0.26, z + centerZ]}><boxGeometry args={[2.5, 0.2, len]} /><meshStandardMaterial color={shoulderColor} roughness={0.8} /></mesh>
+        <mesh key={`shoulder-v-${i}`} position={[x, 0.26, z + centerZ]}><boxGeometry args={[2.5, 0.2, len]} /><meshPhysicalMaterial color={shoulderColor} roughness={0.38} metalness={0.06} clearcoat={0.18} clearcoatRoughness={0.58} /></mesh>
       ))}
       {[[0, -roadHalfH - 7, roadHalfW * 2 + 20], [0, roadHalfH + 7, roadHalfW * 2 + 20]].map(([x, z, len], i) => (
-        <mesh key={`shoulder-h-${i}`} position={[x, 0.26, z + centerZ]}><boxGeometry args={[len, 0.2, 2.5]} /><meshStandardMaterial color={shoulderColor} roughness={0.8} /></mesh>
+        <mesh key={`shoulder-h-${i}`} position={[x, 0.26, z + centerZ]}><boxGeometry args={[len, 0.2, 2.5]} /><meshPhysicalMaterial color={shoulderColor} roughness={0.38} metalness={0.06} clearcoat={0.18} clearcoatRoughness={0.58} /></mesh>
       ))}
 
       {/* Micro-détails routiers : grilles, plots et marquages au sol */}
@@ -1169,8 +1169,8 @@ function CityCircuitRailway({ night, centerZ }) {
         [-roadHalfW - 18, -0.2, centerZ, 14, 1.3, roadHalfH * 2 + 44],
       ].map(([x, y, z, w, h, d], index) => (
         <group key={`berm-${index}`} position={[x, y, z]}>
-          <mesh position={[0, -0.15, 0]}><boxGeometry args={[w, h, d]} /><meshStandardMaterial color={bermEarth} roughness={0.95} /></mesh>
-          <mesh position={[0, 0.45, 0]}><boxGeometry args={[w * 0.94, h * 0.6, d * 0.9]} /><meshStandardMaterial color={bermGreen} roughness={0.98} /></mesh>
+          <mesh position={[0, -0.15, 0]}><boxGeometry args={[w, h, d]} /><meshPhysicalMaterial color={bermEarth} roughness={0.88} metalness={0.01} clearcoat={0.06} clearcoatRoughness={0.94} /></mesh>
+          <mesh position={[0, 0.45, 0]}><boxGeometry args={[w * 0.94, h * 0.6, d * 0.9]} /><meshPhysicalMaterial color={bermGreen} roughness={0.96} metalness={0.01} clearcoat={0.04} clearcoatRoughness={0.96} /></mesh>
         </group>
       ))}
 
@@ -1193,16 +1193,16 @@ function CityCircuitRailway({ night, centerZ }) {
       {/* Échangeurs routiers monumentaux Est/Ouest */}
       {[[-1, -roadHalfW - 18], [1, roadHalfW + 18]].map(([dir, x], index) => (
         <group key={`interchange-${index}`} position={[x, 0, centerZ]}>
-          <mesh position={[0, 4.8, 0]}><boxGeometry args={[5.4, 0.34, 56]} /><meshStandardMaterial color={roadColor} roughness={0.84} /></mesh>
+          <mesh position={[0, 4.8, 0]}><boxGeometry args={[5.4, 0.34, 56]} /><meshPhysicalMaterial color={roadColor} roughness={0.72} metalness={0.05} clearcoat={0.08} clearcoatRoughness={0.88} /></mesh>
           <mesh position={[0, 5.02, 0]}><boxGeometry args={[1.2, 0.05, 52]} /><meshStandardMaterial color={medianColor} emissive={medianColor} emissiveIntensity={night ? 0.55 : 0} /></mesh>
           {[-18, 18].map((z, rampIndex) => (
             <mesh key={`ramp-${rampIndex}`} position={[-dir * 11, 2.6, z]} rotation={[0, 0, dir * (rampIndex === 0 ? 0.24 : -0.24)]}>
               <boxGeometry args={[24, 0.3, 5]} />
-              <meshStandardMaterial color={roadColor} roughness={0.86} />
+              <meshPhysicalMaterial color={roadColor} roughness={0.74} metalness={0.05} clearcoat={0.08} clearcoatRoughness={0.86} />
             </mesh>
           ))}
           {[-20, -8, 8, 20].map((z, pillarIndex) => (
-            <mesh key={`pillar-${pillarIndex}`} position={[0, 2.2, z]}><boxGeometry args={[0.9, 4.4, 0.9]} /><meshStandardMaterial color={night ? '#636a74' : '#c8d0d8'} roughness={0.72} /></mesh>
+            <mesh key={`pillar-${pillarIndex}`} position={[0, 2.2, z]}><boxGeometry args={[0.9, 4.4, 0.9]} /><meshPhysicalMaterial color={night ? '#636a74' : '#c8d0d8'} roughness={0.46} metalness={0.06} clearcoat={0.14} clearcoatRoughness={0.58} /></mesh>
           ))}
         </group>
       ))}
@@ -2131,7 +2131,7 @@ function MegaCityExpansion({ night, centerZ }) {
       {/* ═══════════════════════════════════════════ */}
       <group position={[-W - 30, 0, -20 + centerZ]}>
         {/* Bâtiment principal vitré — 2 ailes + atrium */}
-        <mesh position={[0, 5, 0]}><boxGeometry args={[28, 10, 18]} /><meshPhysicalMaterial color={night ? '#0d1530' : '#c0d0e0'} metalness={0.8} roughness={0.06} transparent opacity={0.55} /></mesh>
+        <mesh position={[0, 5, 0]}><boxGeometry args={[28, 10, 18]} /><meshPhysicalMaterial color={night ? '#0d1530' : '#c0d0e0'} metalness={0.82} roughness={0.04} clearcoat={1} clearcoatRoughness={0.04} transparent opacity={0.58} transmission={0.08} /></mesh>
         {/* Dalles étages */}
         {[0, 3.5, 7].map(y => <mesh key={`cd-${y}`} position={[0, y + 0.5, 0]}><boxGeometry args={[28.2, 0.15, 18.2]} /><meshStandardMaterial color={night ? '#2a3050' : '#e8ecf0'} metalness={0.4} /></mesh>)}
         {/* Atrium central vitré */}
@@ -2143,7 +2143,7 @@ function MegaCityExpansion({ night, centerZ }) {
         <mesh ref={(el) => { hallScreenRefs.current[2] = el; }} position={[0, 6.2, 9.08]}><boxGeometry args={[12, 4.2, 0.08]} /><meshStandardMaterial color="#17324f" emissive="#ff7fd6" emissiveIntensity={night ? 1.8 : 0.16} /></mesh>
         <Text position={[0, 6.22, 9.16]} fontSize={0.46} color="#ffffff" anchorX="center" fontWeight="bold">CITY LIFESTYLE DISTRICT</Text>
         {[-9, -3, 3, 9].map((x, i) => (
-          <mesh key={`mall-storefront-${i}`} position={[x, 2.2, 9.12]}><planeGeometry args={[4.6, 3.6]} /><meshPhysicalMaterial color={districtGlass} transparent opacity={0.48} metalness={0.55} roughness={0.04} /></mesh>
+          <mesh key={`mall-storefront-${i}`} position={[x, 2.2, 9.12]}><planeGeometry args={[4.6, 3.6]} /><meshPhysicalMaterial color={districtGlass} transparent opacity={0.52} metalness={0.62} roughness={0.03} transmission={0.24} clearcoat={1} clearcoatRoughness={0.04} /></mesh>
         ))}
         {[-4.5, 4.5].map((x, i) => (
           <mesh key={`mall-door-${i}`} position={[x, 1.6, 9.16]}><boxGeometry args={[2.4, 3.2, 0.12]} /><meshStandardMaterial color={i === 0 ? '#dff6ff' : '#4b535c'} emissive={i === 0 ? '#7ce7ff' : '#000000'} emissiveIntensity={night && i === 0 ? 0.9 : 0} metalness={0.7} roughness={0.08} transparent opacity={i === 0 ? 0.52 : 1} /></mesh>
@@ -2157,7 +2157,7 @@ function MegaCityExpansion({ night, centerZ }) {
         {/* Entrée */}
         <mesh position={[0, 2, 9.1]}><boxGeometry args={[6, 4, 0.05]} /><meshPhysicalMaterial color={night ? '#0a1a30' : '#b0d0e8'} transparent opacity={0.35} metalness={0.8} /></mesh>
         {/* Parking centre commercial */}
-        <mesh position={[-18, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[10, 18]} /><meshStandardMaterial color={night ? '#2a2e34' : '#808488'} roughness={0.8} /></mesh>
+        <mesh position={[-18, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}><planeGeometry args={[10, 18]} /><meshPhysicalMaterial color={night ? '#2a2e34' : '#808488'} roughness={0.68} metalness={0.04} clearcoat={0.08} clearcoatRoughness={0.92} /></mesh>
         {/* Voitures parking (8) */}
         {[[-20, -6], [-20, -3], [-20, 0], [-20, 3], [-16, -6], [-16, -3], [-16, 0], [-16, 3]].map(([cx, cz], ci) => (
           <mesh key={`mcar-${ci}`} position={[cx, 0.4, cz]}><boxGeometry args={[1.6, 0.5, 0.9]} /><meshStandardMaterial color={['#cc0000', '#0066cc', '#333', '#fff', '#FFD700', '#1a1a1a', '#0088aa', '#880044'][ci]} metalness={0.5} roughness={0.3} /></mesh>
@@ -2251,7 +2251,7 @@ function MegaCityExpansion({ night, centerZ }) {
 
       {[[-22, 'CAPTURE HOTEL'], [22, 'SKY SUITES']].map(([x, label], index) => (
         <group key={`live-hotel-${index}`} position={[96 + x, 0, 26 + centerZ]}>
-          <mesh position={[0, 11, 0]}><boxGeometry args={[12, 22, 12]} /><meshPhysicalMaterial color={night ? '#16283a' : '#dfe9f0'} transparent opacity={0.72} metalness={0.6} roughness={0.08} /></mesh>
+          <mesh position={[0, 11, 0]}><boxGeometry args={[12, 22, 12]} /><meshPhysicalMaterial color={night ? '#16283a' : '#dfe9f0'} transparent opacity={0.76} metalness={0.64} roughness={0.05} clearcoat={1} clearcoatRoughness={0.05} transmission={0.06} /></mesh>
           <mesh position={[0, 22.4, 0]}><boxGeometry args={[13, 0.32, 13]} /><meshStandardMaterial color={night ? '#223244' : '#f3f6f9'} roughness={0.18} metalness={0.28} /></mesh>
           <mesh position={[0, 20.2, 6.08]}><boxGeometry args={[8.8, 1, 0.12]} /><meshStandardMaterial color="#17324f" emissive={index === 0 ? '#41d8ff' : '#ffd870'} emissiveIntensity={night ? 2.1 : 0.16} /></mesh>
           <Text position={[0, 20.24, 6.24]} fontSize={0.46} color="#ffffff" anchorX="center" fontWeight="bold">{label}</Text>
@@ -2271,7 +2271,7 @@ function MegaCityExpansion({ night, centerZ }) {
 
       {[[-24, 'NEON LOUNGE'], [24, 'DINING DECK']].map(([x, label], index) => (
         <group key={`district-restaurant-${index}`} position={[96 + x, 0, 8 + centerZ]}>
-          <mesh position={[0, 1.6, 0]}><boxGeometry args={[18, 3.2, 10]} /><meshPhysicalMaterial color={night ? '#1d2c3b' : '#f5f2eb'} transparent opacity={0.72} metalness={0.34} roughness={0.08} /></mesh>
+          <mesh position={[0, 1.6, 0]}><boxGeometry args={[18, 3.2, 10]} /><meshPhysicalMaterial color={night ? '#1d2c3b' : '#f5f2eb'} transparent opacity={0.76} metalness={0.38} roughness={0.05} clearcoat={0.72} clearcoatRoughness={0.08} transmission={0.04} /></mesh>
           <mesh position={[0, 3.4, 0]}><boxGeometry args={[18.6, 0.24, 10.6]} /><meshStandardMaterial color={night ? '#2b3746' : '#ffffff'} roughness={0.18} metalness={0.24} /></mesh>
           <mesh position={[0, 2.9, 5.08]}><boxGeometry args={[9.5, 0.9, 0.12]} /><meshStandardMaterial color="#17324f" emissive={index === 0 ? '#ff56d6' : '#7ce7ff'} emissiveIntensity={night ? 1.9 : 0.14} /></mesh>
           <Text position={[0, 2.92, 5.22]} fontSize={0.42} color="#ffffff" anchorX="center" fontWeight="bold">{label}</Text>
@@ -2304,8 +2304,8 @@ function MegaCityExpansion({ night, centerZ }) {
         ))}
 
         <group>
-          <mesh position={[0, 3.4, 0]}><boxGeometry args={[28, 6.8, 22]} /><meshPhysicalMaterial color={night ? '#163048' : '#eef4f8'} transparent opacity={0.76} metalness={0.56} roughness={0.08} /></mesh>
-          <mesh position={[0, 17.5, 0]}><boxGeometry args={[18, 28, 14]} /><meshPhysicalMaterial color={night ? '#17314b' : '#dfeaf1'} transparent opacity={0.72} metalness={0.62} roughness={0.08} /></mesh>
+          <mesh position={[0, 3.4, 0]}><boxGeometry args={[28, 6.8, 22]} /><meshPhysicalMaterial color={night ? '#163048' : '#eef4f8'} transparent opacity={0.8} metalness={0.6} roughness={0.05} clearcoat={1} clearcoatRoughness={0.05} transmission={0.08} /></mesh>
+          <mesh position={[0, 17.5, 0]}><boxGeometry args={[18, 28, 14]} /><meshPhysicalMaterial color={night ? '#17314b' : '#dfeaf1'} transparent opacity={0.76} metalness={0.68} roughness={0.05} clearcoat={1} clearcoatRoughness={0.04} transmission={0.08} /></mesh>
           <mesh position={[0, 31.7, 0]}><boxGeometry args={[19.5, 0.34, 15.5]} /><meshStandardMaterial color={night ? '#f0f5fa' : '#ffffff'} roughness={0.16} metalness={0.22} /></mesh>
           <mesh ref={(el) => { skylineCrownRefs.current[0] = el; }} position={[0, 28.6, 7.08]}><boxGeometry args={[10.8, 1.1, 0.12]} /><meshStandardMaterial color="#17324f" emissive="#ffd870" emissiveIntensity={night ? 2.4 : 0.16} /></mesh>
           <Text position={[0, 28.62, 7.2]} fontSize={0.5} color="#ffffff" anchorX="center" fontWeight="bold">AURORA PALACE</Text>
