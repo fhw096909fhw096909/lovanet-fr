@@ -6,8 +6,6 @@ import MiniCatalogOrb from "@/components/MiniCatalogOrb";
 import AnimeMomentsPresentation from "@/components/AnimeMomentsPresentation";
 import { buildYouTubeEmbedUrl } from "@/lib/youtubeEmbed";
 import crystalCity from "@/assets/crystal-city.jpg.asset.json";
-import animeMomentsTop from "@/assets/anime-moments-top-v15.mp4.asset.json";
-import { safeLovableVideoSource } from "@/lib/lovableVideoSources";
 
 
 import NeonFooterBar from "@/components/NeonFooterBar";
@@ -18,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { MiniPreviewPlayer } from "@/components/MiniPreviewPlayer";
 import { IMPORTED_VIDEOS } from "@/data/importedVideos";
 
-const ANIME_MOMENTS_TOP_VIDEO = "https://drive.google.com/uc?export=download&id=1Gd0U4iORwZz2UZBiFUmhnfWlIZGXGxN4";
+const ANIME_MOMENTS_TOP_VIDEO = "/home-banner.mp4";
 
 const SHOP_REEL_MP4 =
   "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4";

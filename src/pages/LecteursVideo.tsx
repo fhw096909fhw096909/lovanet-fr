@@ -1,9 +1,7 @@
 import { PageShell } from "@/components/PageShell";
 import { Helmet } from "react-helmet-async";
-import lecteurBanner from "@/assets/lecteur-video-banner-v15.mp4.asset.json";
-import { safeLovableVideoSource } from "@/lib/lovableVideoSources";
 
-const LECTEURS_VIDEO_TOP_VIDEO = "https://drive.google.com/uc?export=download&id=1OagvdeVi3u0c_opbhUSQoTni3znvkUt8";
+const LECTEURS_VIDEO_TOP_VIDEO = "/actualites-banner.mp4";
 
 const PRIMARY_SITE = "https://lovanet.fr";
 

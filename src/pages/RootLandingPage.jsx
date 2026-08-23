@@ -17,16 +17,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { usePortalAudio } from "@/hooks/usePortalAudio";
 import { FloatingCardsDeco } from "@/components/BreakoutDecorations";
 import { motion } from "framer-motion";
-import portalGlassVideo1 from "@/assets/portal-glass-video-1.mp4.asset.json";
-import portalGlassVideo2 from "@/assets/portal-glass-video-2.mp4.asset.json";
 
-const PORTAL_CARD_VIDEO = "https://drive.google.com/uc?export=download&id=1Sao371KD1M-K6uvNiOP_vlrAX5D2DGzX";
-const PORTAL_BACKGROUND_VIDEO = "https://drive.google.com/uc?export=download&id=1-cYmT-i_clEth0g2SJv48n8ZnkPQex39";
-
-const resolvePortalGlassVideoSource = (asset, fallback) => {
-  const source = asset?.url || fallback;
-  return source.startsWith("/__l5e/") ? fallback : source;
-};
+const PORTAL_CARD_VIDEO = "/global-bg-web.mp4";
+const PORTAL_BACKGROUND_VIDEO = "/global-bg-mobile.mp4";
 
 const rotatingPortalDestinations = [
   { to: "/anime-moments", label: "Anime Moments", icon: Film },

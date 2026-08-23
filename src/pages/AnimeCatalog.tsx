@@ -1,8 +1,6 @@
 import { OPEN_QUICKNAV_EVENT } from "@/components/QuickNavCarousel";
-import catalogTopBanner from "@/assets/short-banner.mp4.asset.json";
-import { safeLovableVideoSource } from "@/lib/lovableVideoSources";
 
-const CATALOG_TOP_VIDEO = "https://drive.google.com/uc?export=download&id=1YWk4ff7WyEeKwJthpfTPuEO74UXX3RGU";
+const CATALOG_TOP_VIDEO = "/catalogue-banner.mp4";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Helmet } from "react-helmet-async";

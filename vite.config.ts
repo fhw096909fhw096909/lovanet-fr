@@ -12,6 +12,18 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    watch: {
+      usePolling: true,
+      interval: 300,
+      ignored: [
+        "/app/.lovable-sync-test.txt",
+        "/app/.lovable-sync-*.txt",
+        "**/.lovable-sync-test.txt",
+        "**/.lovable-sync-*.txt",
+        "**/.git/**",
+        "**/node_modules/**",
+      ],
+    },
     hmr: {
       overlay: false,
     },
