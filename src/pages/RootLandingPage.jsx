@@ -248,8 +248,8 @@ export default function RootLandingPage() {
 
   const [previewSoundEnabled, setPreviewSoundEnabled] = useState(true);
   const [heroFxVariant] = useState(() => 1 + Math.floor(Math.random() * 5));
-  const portalGlassVideo1Source = PORTAL_CARD_VIDEO;
-  const portalGlassVideo2Source = PORTAL_BACKGROUND_VIDEO;
+  const portalGlassVideo1Source = PORTAL_TOP_FOREGROUND_VIDEO;
+  const portalGlassVideo2Source = PORTAL_TOP_BACKGROUND_VIDEO;
   // Variation d'effet 3D (panorama / flexion / tilt / vague / balancier) tiree
   // au hasard a chaque arrivee sur la page Portail.
 
