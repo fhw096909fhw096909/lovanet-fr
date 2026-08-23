@@ -5,9 +5,9 @@ import { cn } from "@/lib/utils";
 import { AdminRemoveVideo } from "@/components/AdminRemoveVideo";
 import { ManualSyncButton } from "@/components/ManualSyncButton";
 import { GDriveCinematicBanner } from "@/components/GDriveCinematicBanner";
+import { HubEmbedFrame } from "@/components/HubEmbedFrame";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import FerryTrainCityPlaza from "@/components/FerryTrainCityPlaza";
 import { TrainStationReplicaWorld } from "@/components/TrainStation";
 
 type TTItem = {
@@ -241,17 +241,17 @@ const Tiktok = () => {
             style={{ transform: `translateY(${hubParallaxY}px)` }}
             data-testid="tiktok-hub-3d-strip"
           >
-            <Canvas
-              dpr={[1, 1.5]}
-              camera={hubScene === "train" ? { position: [0, 8, 26], fov: 48 } : { position: [24, 9, 20], fov: 52 }}
-              gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-              style={{ background: "#89b4ce" }}
-            >
-              <ambientLight intensity={1.15} color="#fff9ec" />
-              <directionalLight position={[18, 28, 16]} intensity={1.35} color="#fff0ca" />
-              <directionalLight position={[-12, 15, -12]} intensity={0.6} color="#cfe8ff" />
+            {hubScene === "train" ? (
+              <Canvas
+                dpr={[1, 1.5]}
+                camera={{ position: [0, 8, 26], fov: 48 }}
+                gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
+                style={{ background: "#89b4ce" }}
+              >
+                <ambientLight intensity={1.15} color="#fff9ec" />
+                <directionalLight position={[18, 28, 16]} intensity={1.35} color="#fff0ca" />
+                <directionalLight position={[-12, 15, -12]} intensity={0.6} color="#cfe8ff" />
 
-              {hubScene === "train" ? (
                 <group position={[0, -1.2, 0]} scale={[0.72, 0.72, 0.72]}>
                   <TrainStationReplicaWorld
                     isNight={false}
@@ -261,26 +261,24 @@ const Tiktok = () => {
                     onTrainHorn={null}
                   />
                 </group>
-              ) : (
-                <FerryTrainCityPlaza
-                  night={false}
-                  isMobile
-                  compactScene
-                  position={[0, -1.68, -24]}
-                  rotation={[0, -0.2, 0]}
-                  scale={[0.16, 0.16, 0.16]}
-                />
-              )}
 
-              <OrbitControls
-                enablePan={false}
-                enableZoom={false}
-                enableRotate={false}
-                autoRotate
-                autoRotateSpeed={hubScene === "train" ? 0.62 : 0.34}
-                target={hubScene === "train" ? [0, 1.5, 6] : [0, 0, -20]}
+                <OrbitControls
+                  enablePan={false}
+                  enableZoom={false}
+                  enableRotate={false}
+                  autoRotate
+                  autoRotateSpeed={0.62}
+                  target={[0, 1.5, 6]}
+                />
+              </Canvas>
+            ) : (
+              <HubEmbedFrame
+                src="/hub/ferry"
+                title="Ferry Hub"
+                heightClassName="h-[240px] sm:h-[300px] md:h-[360px]"
+                testId="tiktok-ferry-hub-embed"
               />
-            </Canvas>
+            )}
             <div className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b from-[#0a1322] to-transparent" />
           </div>
         </div>
