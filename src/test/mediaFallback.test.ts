@@ -11,6 +11,8 @@ describe("site fallback media", () => {
         "/actualites-banner-2.mp4",
         "/home-banner.mp4",
         "/custom-hero-banner.mp4",
+        "/premium-border-1.mp4",
+        "/premium-border-2.mp4",
       ]),
     );
   });

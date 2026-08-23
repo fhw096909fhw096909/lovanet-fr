@@ -1,15 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import bgLoop1 from '@/assets/bg-loop-1.mp4.asset.json';
-import bgLoop2 from '@/assets/bg-loop-2.mp4.asset.json';
-import bgLoop3 from '@/assets/bg-loop-3.mp4.asset.json';
-import bgLoop4 from '@/assets/bg-loop-4.mp4.asset.json';
-
 const BACKGROUND_VIDEO_PLAYLIST = [
-  "https://drive.google.com/uc?export=download&id=1B53BjAXQHtOqog07KJirn6FRzWbZNp1O",
-  "https://drive.google.com/uc?export=download&id=1Z-2Tg96mQWPcMPr2FRTV2SjnEm_0hcJF",
-  "https://drive.google.com/uc?export=download&id=1E8QyVwiogsVLAEgEqomQCKMRLqtzuL5B",
-  "https://drive.google.com/uc?export=download&id=1rjT6serxi0jz_56bkS9hUvAGiX9nJWtx",
+  "/premium-border-1.mp4",
+  "/premium-border-2.mp4",
+  "/premium-border-3.mp4",
+  "/premium-border-4.mp4",
 ];
 
 const Leaf = ({ delay, x, duration }) => (
