@@ -18,8 +18,10 @@ import { usePortalAudio } from "@/hooks/usePortalAudio";
 import { FloatingCardsDeco } from "@/components/BreakoutDecorations";
 import { motion } from "framer-motion";
 
-const PORTAL_CARD_VIDEO = "/global-bg-web.mp4";
-const PORTAL_BACKGROUND_VIDEO = "/global-bg-mobile.mp4";
+const PORTAL_TOP_BACKGROUND_VIDEO = "/portal-top-background.mp4";
+const PORTAL_TOP_FOREGROUND_VIDEO = "/portal-top-foreground.mp4";
+const PORTAL_BOTTOM_SQUARE_VIDEO = "/portal-bottom-square.mp4";
+const PORTAL_BOTTOM_BACKGROUND_VIDEO = "/portal-bottom-background.mp4";
 
 const rotatingPortalDestinations = [
   { to: "/anime-moments", label: "Anime Moments", icon: Film },
@@ -437,7 +439,7 @@ export default function RootLandingPage() {
               >
                 <video
                   className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-60"
-                  src={portalGlassVideo2Source}
+                  src={PORTAL_TOP_BACKGROUND_VIDEO}
                   autoPlay
                   muted
                   loop
@@ -448,7 +450,7 @@ export default function RootLandingPage() {
                 />
                 <video
                   className="pointer-events-none absolute inset-0 h-full w-full object-contain opacity-85 mix-blend-screen"
-                  src={portalGlassVideo1Source}
+                  src={PORTAL_TOP_FOREGROUND_VIDEO}
                   autoPlay
                   muted
                   loop
@@ -666,6 +668,44 @@ export default function RootLandingPage() {
                   )}
                 </>
               )}
+
+              <div className="mt-20 overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-[linear-gradient(180deg,rgba(8,18,40,0.94),rgba(5,16,36,0.9))] shadow-[0_28px_90px_-40px_rgba(56,189,248,0.38)]">
+                <div className="relative isolate min-h-[260px] sm:min-h-[300px] lg:min-h-[320px]">
+                  <video
+                    className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-55"
+                    src={PORTAL_BOTTOM_BACKGROUND_VIDEO}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    aria-hidden="true"
+                    data-testid="home-platforms-bottom-background-video"
+                  />
+                  <div className="relative z-10 grid gap-4 p-4 sm:grid-cols-[minmax(0,18rem)_minmax(0,1fr)] sm:items-center sm:p-6 lg:p-8">
+                    <div className="relative aspect-square overflow-hidden rounded-[1.5rem] border border-white/15 bg-black/30 shadow-[0_20px_70px_-30px_rgba(34,211,238,0.55)]" data-testid="home-platforms-bottom-square-frame">
+                      <video
+                        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+                        src={PORTAL_BOTTOM_SQUARE_VIDEO}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        preload="auto"
+                        aria-hidden="true"
+                        data-testid="home-platforms-bottom-square-video"
+                      />
+                    </div>
+                    <div className="relative z-10 max-w-2xl space-y-3 text-white">
+                      <p className="text-xs uppercase tracking-[0.28em] text-cyan-100/70">Bannière du portail</p>
+                      <p className="text-xl font-semibold text-white sm:text-2xl">Vidéos de fond, carré à gauche, lecture active</p>
+                      <p className="max-w-xl text-sm leading-6 text-white/70">
+                        Le cadre carré de gauche reçoit la vidéo dédiée, avec le fond translucide derrière toute la bannière bleu nuit.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
