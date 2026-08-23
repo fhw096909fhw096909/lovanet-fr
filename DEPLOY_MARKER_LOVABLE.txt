@@ -1,6 +1,4 @@
-Lovable deploy marker
-Branch: fix-right-anchor-lovable
-Commit: cfa6dfc3
-Timestamp: 2026-08-18T12:00:00Z
-
-This file is added/updated to trigger a visible repo change for the Lovable dashboard.
+deployed_at=2026-08-22T22:27:31Z
+commit=842696b76ba7e97470e108dd4a01343e03ee849d
+branch=emergent-sync-seo-portal
+remote=emergent
