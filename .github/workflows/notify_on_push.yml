@@ -1,0 +1,20 @@
+name: Notify Web Push on fix-right-anchor
+
+on:
+  push:
+    branches:
+      - fix-right-anchor
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify webhook
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ secrets.WEBPUSH_TRIGGER_URL }}
+          method: POST
+          headers: |
+            X-Webhook-Token: ${{ secrets.WEBPUSH_TRIGGER_TOKEN }}
+            Content-Type: application/json
+          body: '{"message":"Hub 3D updates pushed to fix-right-anchor"}'
