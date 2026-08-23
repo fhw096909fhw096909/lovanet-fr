@@ -4,11 +4,6 @@ export function usePushNotifications() {
   const lastCheck = useRef<string | null>(null);
 
   useEffect(() => {
-    // Check permission
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
-    }
-
     const checkNews = async () => {
       if (!("Notification" in window) || Notification.permission !== "granted") return;
 
@@ -22,17 +17,29 @@ export function usePushNotifications() {
         const savedTime = localStorage.getItem("lovanet.lastNewsUpdate");
         
         if (savedTime && latestTime && latestTime !== savedTime) {
-          // Find if there's a specific new item
+          if (lastCheck.current === latestTime) return;
+
+          lastCheck.current = latestTime;
           const firstItem = data.items?.[0];
           if (firstItem) {
-            new Notification("Nouveau contenu sur Lovanet !", {
+            const options = {
               body: firstItem.title,
               icon: "/lovanet-icon-192.png",
-            });
+              badge: "/lovanet-icon-64.png",
+              tag: `lovanet-news-${latestTime}`,
+            };
+
+            const reg = "serviceWorker" in navigator ? await navigator.serviceWorker.getRegistration() : null;
+            if (reg) {
+              await reg.showNotification("Nouveau contenu sur Lovanet !", options);
+            } else if (document.visibilityState !== "visible") {
+              new Notification("Nouveau contenu sur Lovanet !", options);
+            }
           }
         }
         
         if (latestTime) {
+          lastCheck.current = latestTime;
           localStorage.setItem("lovanet.lastNewsUpdate", latestTime);
         }
       } catch (err) {
